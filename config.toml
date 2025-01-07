@@ -1,0 +1,11 @@
+title = "HSMA LOS REGRESSION"
+
+[database]
+sql_database = "Data_Lab_NCL_Dev"
+sql_cooloff = 60
+
+[struct]
+script_dir = "docs/scripts/"
+
+[data_scripts]
+ds_sus_spell = "sus_spell_data.sql"

@@ -5,7 +5,16 @@ sql_database = "Data_Lab_NCL_Dev"
 sql_cooloff = 60
 
 [struct]
+data_dir = "data/"
 script_dir = "docs/scripts/"
 
+hrg_trim_days_column_el = "Ordinary \nelective long \nstay trim point \n(days)"
+hrg_trim_days_column_nel = "Non-elective \nlong stay \ntrim point \n(days)"
+
 [data_scripts]
-ds_sus_spell = "sus_spell_data.sql"
+ds_sus_spell = "sus_spell_data_dev.sql"
+ds_sus_episode_icd_data = "sus_dominant_eipsode_icd_data_dev.sql"
+
+[data_files]
+ds_hrg_trim = "hrg_trim_data.csv"
+ds_cc_list = "cc_list.csv"

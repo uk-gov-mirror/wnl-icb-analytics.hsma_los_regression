@@ -1,4 +1,4 @@
-SELECT TOP(1000)
+SELECT
 	--PRIMARY KEY ID
 	spl.[PRIMARYKEY_ID] AS [pid],
 	--LoS
@@ -20,6 +20,9 @@ SELECT TOP(1000)
 	[spell.admission.intended_management] AS [pod_code],
 	[spell.admission.admission_type] AS [pod_desc],
 	--HRG
-	[spell.commissioning.grouping.core_hrg] AS [hrg_code]
+	[spell.commissioning.grouping.core_hrg] AS [hrg_code],
+	--Admission Context
+	[spell.admission.method] AS [admission_method],
+    [spell.admission.source] AS [admission_source]
 
 FROM [Data_Store_SUS_Unified].[APC].[spell] spl

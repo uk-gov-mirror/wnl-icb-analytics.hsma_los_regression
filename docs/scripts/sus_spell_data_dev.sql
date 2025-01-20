@@ -20,7 +20,10 @@ SELECT
 	[spell.admission.intended_management] AS [pod_code],
 	[spell.admission.admission_type] AS [pod_desc],
 	--HRG
-	[spell.commissioning.grouping.core_hrg] AS [hrg_code]
+	[spell.commissioning.grouping.core_hrg] AS [hrg_code],
+	--Admission Context
+	[spell.admission.method] AS [admission_method],
+    [spell.admission.source] AS [admission_source]
 
 FROM [Data_Store_SUS_Unified].[APC].[spell] spl
 WHERE YEAR([spell.admission.date]) = 2024 AND MONTH([spell.admission.date]) = 6

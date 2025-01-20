@@ -1,7 +1,7 @@
 
 Library imports
 ```{python}
-#
+#Import packages
 import pandas as pd
 import toml
 from dotenv import load_dotenv
@@ -28,8 +28,20 @@ def load_settings():
         "sql_database": config["database"]["sql_database"],
 
         #Data to pull
+        "hrg_trim_file":    ("./" + config["struct"]["data_dir"] +
+                            config["data_files"]["ds_hrg_trim"]),
+        "cc_list_file":     ("./" + config["struct"]["data_dir"] +
+                            config["data_files"]["ds_cc_list"]),
+
         "sus_spell_script": ("./" + config["struct"]["script_dir"] + 
-                            config["data_scripts"]["ds_sus_spell"])
+                            config["data_scripts"]["ds_sus_spell"]),
+        "sus_episode_icd_script":
+                            ("./" + config["struct"]["script_dir"] + 
+                            config["data_scripts"]["ds_sus_episode_icd_data"]),
+
+        #Structure Information
+        "hrg_trim_days_column_el": config["struct"]["hrg_trim_days_column_el"],
+        "hrg_trim_days_column_nel": config["struct"]["hrg_trim_days_column_nel"]
     }
 
     return settings
@@ -57,6 +69,8 @@ def load_data_from_query(engine, query):
     return res
 ```
 
+Pull data from the Sandpit
+
 Import datasets
 ```{python}
 
@@ -67,12 +81,71 @@ engine = db_connect(settings["sql_address"], settings["sql_database"])
 ##Load the SQL Script
 with open(settings["sus_spell_script"]) as file:
     query_sus_spell = text(file.read())
+df_sus_spell = load_data_from_query(engine, query_sus_spell)
 
-df_sus_spell = load_data_from_query(engine, query_sus_spell) 
+#SUS Dominant Episode ICD Codes
+with open(settings["sus_episode_icd_script"]) as file:
+    query_episode_icd = text(file.read())
+df_episode_icd = load_data_from_query(engine, query_episode_icd)
 
 ```
 
-```{python}
-df_sus_spell.head()
+Pull data from local files
 
+```{python}
+
+#Load HRG Trim data
+df_hrg_trim = pd.read_csv(settings["hrg_trim_file"])
+df_cc_list = pd.read_csv(settings["cc_list_file"])
+
+```
+
+Join the HRG Trim Points data to the main dataframe
+
+```{python}
+df_working = df_sus_spell.copy()
+
+#Clean HRG data
+df_hrg_trim_clean = df_hrg_trim[["HRG Code", settings["hrg_trim_days_column_el"], settings["hrg_trim_days_column_nel"]]]
+df_hrg_trim_clean.columns = ["hrg_code", "hrg_trim_days_el", "hrg_trim_days_nel"]
+
+#Join to the SUS data
+df_working["hrg_code"] = df_working["hrg_code"].astype(str)
+df_hrg_trim_clean.loc[:,"hrg_code"] = df_hrg_trim_clean["hrg_code"].astype(str)
+
+df_working = df_working.merge(df_hrg_trim_clean, left_on="hrg_code", right_on="hrg_code")
+
+```
+
+Add HRG codes to the episode data
+
+```{python}
+
+##Create copies of the base data frames
+df_tmp = df_sus_spell.copy()[["pid", "hrg_code"]]
+df_episode_icd_working = df_episode_icd.copy()
+df_cc_list_tmp = df_cc_list.copy()
+
+df_episode_icd_working = df_episode_icd_working.merge(
+    df_tmp, left_on="PRIMARYKEY_ID", right_on="pid")
+
+#Convert to HRG Group
+df_episode_icd_working["hrg_group"] = (
+    df_episode_icd_working["hrg_code"].apply(lambda x: x[:2]))
+df_episode_icd_working["join_key"] = (
+    df_episode_icd_working[["hrg_group", "code"]].agg("_".join, axis=1)
+)
+
+#Modify CC List "List ID" to hrg_group
+df_cc_list_tmp["hrg_group"] = df_cc_list["List ID"].apply(lambda x: x[:2])
+df_cc_list_tmp["join_key"] = (
+    df_cc_list_tmp[["hrg_group", "Code"]].agg("_".join, axis=1)
+)
+df_cc_list_tmp = df_cc_list_tmp[["join_key", "Value"]]
+
+#Join the episode code data to the cc list data to get value per episode code
+df_episode_icd_working = df_episode_icd_working.merge(
+    df_cc_list_tmp, left_on="join_key", right_on="join_key")
+
+df_episode_icd_working['Value'] = df_episode_icd_working['Value'].fillna(0)
 ```

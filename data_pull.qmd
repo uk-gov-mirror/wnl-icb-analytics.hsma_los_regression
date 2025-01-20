@@ -147,16 +147,21 @@ df_cc_list_tmp = df_cc_list_tmp[["join_key", "Value"]]
 df_episode_icd_working = df_episode_icd_working.merge(
     df_cc_list_tmp, left_on="join_key", right_on="join_key")
 
-df_episode_icd_working['Value'] = df_episode_icd_working['Value'].fillna(0)
+df_episode_icd_working["Value"] = df_episode_icd_working['Value'].fillna(0)
+df_episode_icd_working["pid"] = df_episode_icd_working["PRIMARYKEY_ID"]
 ```
 
 Derrive count of comorbidities and total CC Score
 
 ```{python}
-df_episode_icd_agg = df_episode_icd_working.groupby(["PRIMARYKEY_ID", "hrg_code"]).agg(
-    count_comorbidities = ("PRIMARYKEY_ID", "size"),
+df_episode_icd_agg = df_episode_icd_working.groupby(["pid"]).agg(
+    count_comorbidities = ("pid", "size"),
     cc_score = ("Value", "sum")
 ).reset_index()
 
-df_episode_icd_agg
+```
+
+```{python}
+df_working_withcc = df_working.merge(
+    df_episode_icd_agg, left_on="pid", right_on="pid")
 ```

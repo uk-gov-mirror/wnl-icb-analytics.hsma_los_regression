@@ -149,3 +149,14 @@ df_episode_icd_working = df_episode_icd_working.merge(
 
 df_episode_icd_working['Value'] = df_episode_icd_working['Value'].fillna(0)
 ```
+
+Derrive count of comorbidities and total CC Score
+
+```{python}
+df_episode_icd_agg = df_episode_icd_working.groupby(["PRIMARYKEY_ID", "hrg_code"]).agg(
+    count_comorbidities = ("PRIMARYKEY_ID", "size"),
+    cc_score = ("Value", "sum")
+).reset_index()
+
+df_episode_icd_agg
+```

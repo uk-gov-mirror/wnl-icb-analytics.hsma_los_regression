@@ -17,13 +17,14 @@ SELECT
     [spell.patient.identity.ethnic_category] AS [patient_ethniccat],
 	[spell.patient.identity.age_on_admission] AS [patient_age],
 	--POD
-	[spell.admission.intended_management] AS [pod_code],
-	[spell.admission.admission_type] AS [pod_desc],
+	[spell.admission.intended_management] AS [pod_intended],
+	[spell.admission.admission_type] AS [pod_actual],
 	--HRG
 	[spell.commissioning.grouping.core_hrg] AS [hrg_code],
 	--Admission Context
 	[spell.admission.method] AS [admission_method],
     [spell.admission.source] AS [admission_source]
+	
 
 FROM [Data_Store_SUS_Unified].[APC].[spell] spl
 WHERE YEAR([spell.admission.date]) = 2024 AND MONTH([spell.admission.date]) = 6

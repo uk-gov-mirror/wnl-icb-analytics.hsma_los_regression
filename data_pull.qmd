@@ -102,7 +102,8 @@ engine = db_connect(settings["sql_address"], settings["sql_database"])
 df_sus_spell = load_data(settings, "sus_spell_script", "sql", engine)
 
 #Convert date into month and year
-df_sus_spell["date_full"] = df_sus_spell["admission_date"]
+df_sus_spell["date_full"] = pd.to_datetime(
+    df_sus_spell["admission_date"]).dt.date
 df_sus_spell["date_year"] = pd.DatetimeIndex(
     df_sus_spell["date_full"]).year
 df_sus_spell["date_month"] = pd.DatetimeIndex(
@@ -271,11 +272,19 @@ df_trust_working = pd.merge(
 
 #### Site Level Datasets
 
+Bed Occupancy
+```{python}
+df_beds = load_data(settings, "beds_script", "sql", engine)
+df_beds["date_full"] = pd.to_datetime(
+    df_beds["date_full"]).dt.date
+```
+
 Join site level data to base df
 ```{python}
 df_site_working = df_site_base.copy()
 
-#This is where the site level datasets would go if I had any
+df_site_working = pd.merge(
+    df_site_working, df_beds, on=["provider_code", "site_code", "date_full"])
 ```
 
 #### Collate hierarchy into single dataset

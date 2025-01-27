@@ -6,7 +6,10 @@ SELECT
 	--ID of patient to join to other datasets
 	[spell.patient.identity.nhs_number.value Pseudo] AS [nhs_pseudo],
 	--Hospital Details
-	[spell.patient.identity.local_patient_identifier.issuer] AS [provider_code],
+	CASE [spell.patient.identity.local_patient_identifier.issuer] 
+		WHEN 'RAL00' THEN 'RAL'
+		ELSE [spell.patient.identity.local_patient_identifier.issuer] 
+		END AS [provider_code],
 	[spell.care_location.site_code_of_treatment] AS [site_code],
 	--Seasonality of admission
 	[spell.admission.date] AS [admission_date],

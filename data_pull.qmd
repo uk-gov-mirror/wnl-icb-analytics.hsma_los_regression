@@ -1,4 +1,4 @@
-
+#### Setup
 Library imports
 ```{python}
 #Import packages
@@ -38,6 +38,9 @@ def load_settings():
         "sus_episode_icd_script":
                             ("./" + config["struct"]["script_dir"] + 
                             config["data_scripts"]["ds_sus_episode_icd_data"]),
+        "hospital_infections_script":
+                            ("./" + config["struct"]["script_dir"] + 
+                            config["data_scripts"]["ds_hospital_infections"]),
 
         #Structure Information
         "hrg_trim_days_column_el": config["struct"]["hrg_trim_days_column_el"],
@@ -67,40 +70,90 @@ def load_data_from_query(engine, query):
         res = pd.read_sql_query(query, con)
 
     return res
+
+#Function to load data
+def load_data(settings, src, src_type="sql", engine=None):
+    #Handle SQL data sources
+    if src_type == "sql":
+        #Load .sql file
+        with open(settings[src]) as file:
+            query_sql = text(file.read())
+        
+        #Execute query
+        return load_data_from_query(engine, query_sql)
+    
+    #Handle csv data sources
+    elif src_type == "csv":
+        #Return file contents
+        return pd.read_csv(settings[src])
 ```
+#### Load Base SUS Data
 
-Pull data from the Sandpit
-
-Import datasets
+Import the data
 ```{python}
 
 #Connect to DB
 engine = db_connect(settings["sql_address"], settings["sql_database"])
 
 #SUS Spell data
-##Load the SQL Script
-with open(settings["sus_spell_script"]) as file:
-    query_sus_spell = text(file.read())
-df_sus_spell = load_data_from_query(engine, query_sus_spell)
+df_sus_spell = load_data(settings, "sus_spell_script", "sql", engine)
 
-#SUS Dominant Episode ICD Codes
-with open(settings["sus_episode_icd_script"]) as file:
-    query_episode_icd = text(file.read())
-df_episode_icd = load_data_from_query(engine, query_episode_icd)
-
+#Convert date into month and year
+df_sus_spell["date_year"] = pd.DatetimeIndex(
+    df_sus_spell["admission_date"]).year
+df_sus_spell["date_month"] = pd.DatetimeIndex(
+    df_sus_spell["admission_date"]).month
 ```
 
-Pull data from local files
+#### Patient Level Datasets
 
+Cormorbidity Data
 ```{python}
+#Load the data
+##SUS Comorbid ICD Codes
+df_episode_icd = load_data(settings, "sus_episode_icd_script", "sql", engine)
+##CC Score Data
+df_cc_list = load_data(settings, "cc_list_file", "csv")
 
-#Load HRG Trim data
-df_hrg_trim = pd.read_csv(settings["hrg_trim_file"])
-df_cc_list = pd.read_csv(settings["cc_list_file"])
+#Create copies of the base data frames
+df_tmp = df_sus_spell.copy()[["pid", "hrg_code"]]
+df_episode_icd_working = df_episode_icd.copy()
+df_cc_list_tmp = df_cc_list.copy()
 
+#Merge with the SUS data to get HRG information for the spell
+df_episode_icd_working = df_episode_icd_working.merge(
+    df_tmp, left_on="PRIMARYKEY_ID", right_on="pid")
+
+#Convert to HRG Code to HRG Group (First few non-numeric characters)
+#Note, my understanding from the CC List data is some HRG Groups are longer than 2 characters but I couldn't find an example in the data
+df_episode_icd_working["hrg_group"] = (
+    df_episode_icd_working["hrg_code"].apply(lambda x: x[:2]))
+df_episode_icd_working["join_key"] = (
+    df_episode_icd_working[["hrg_group", "code"]].agg("_".join, axis=1)
+)
+
+#Modify CC List "List ID" to hrg_group
+df_cc_list_tmp["hrg_group"] = df_cc_list["List ID"].apply(lambda x: x[:2])
+df_cc_list_tmp["join_key"] = (
+    df_cc_list_tmp[["hrg_group", "Code"]].agg("_".join, axis=1)
+)
+df_cc_list_tmp = df_cc_list_tmp[["join_key", "Value"]]
+
+#Join the episode code data to the cc list data to get value per episode code
+df_episode_icd_working = df_episode_icd_working.merge(
+    df_cc_list_tmp, left_on="join_key", right_on="join_key")
+
+df_episode_icd_working["Value"] = df_episode_icd_working['Value'].fillna(0)
+df_episode_icd_working["pid"] = df_episode_icd_working["PRIMARYKEY_ID"]
+
+#Derive count of comorbidities and total CC Score
+df_episode_icd_agg = df_episode_icd_working.groupby(["pid"]).agg(
+    count_comorbidities = ("pid", "size"),
+    cc_score = ("Value", "sum")
+).reset_index()
 ```
 
-Join the HRG Trim Points data to the main dataframe
+HRG Trim Data
 
 ```{python}
 #Functions to extract the lower and upper bounds from the HRG Name in the Trim data
@@ -131,10 +184,9 @@ def get_lower_and_upper(ccr, upper=0):
     #Case 4: CC Score Range is a single value
     else:
         return ccr
-```
 
-```{python}
-df_working = df_sus_spell.copy()
+#Load HRG Trim data
+df_hrg_trim = load_data(settings, "hrg_trim_file", "csv")
 
 #Clean HRG data
 df_hrg_trim_clean = df_hrg_trim[["HRG Code", "HRG Name", 
@@ -155,68 +207,82 @@ df_hrg_trim_clean["ccr_upper"] = df_hrg_trim_clean.loc[:, "cc_range"].apply(
 df_hrg_trim_clean = df_hrg_trim_clean[["hrg_code", "hrg_trim_days_el", 
     "hrg_trim_days_nel", "ccr_lower", "ccr_upper"]]
 
-#Join to the SUS data
-df_working["hrg_code"] = df_working["hrg_code"].astype(str)
 df_hrg_trim_clean.loc[:,"hrg_code"] = df_hrg_trim_clean["hrg_code"].astype(str)
+```
 
+#### Merge Into Patient Level Dataframe 
+```{python}
+df_working = df_sus_spell.copy()
+
+#Set type of hrg_code column as it was interfering with the join
+df_working["hrg_code"] = df_working["hrg_code"].astype(str)
+
+#Integrate the HRG Trim data
 df_working = df_working.merge(df_hrg_trim_clean, 
     left_on="hrg_code", right_on="hrg_code")
 
-```
-
-Add HRG codes to the episode data
-
-```{python}
-
-##Create copies of the base data frames
-df_tmp = df_sus_spell.copy()[["pid", "hrg_code"]]
-df_episode_icd_working = df_episode_icd.copy()
-df_cc_list_tmp = df_cc_list.copy()
-
-df_episode_icd_working = df_episode_icd_working.merge(
-    df_tmp, left_on="PRIMARYKEY_ID", right_on="pid")
-
-#Convert to HRG Group
-df_episode_icd_working["hrg_group"] = (
-    df_episode_icd_working["hrg_code"].apply(lambda x: x[:2]))
-df_episode_icd_working["join_key"] = (
-    df_episode_icd_working[["hrg_group", "code"]].agg("_".join, axis=1)
-)
-
-#Modify CC List "List ID" to hrg_group
-df_cc_list_tmp["hrg_group"] = df_cc_list["List ID"].apply(lambda x: x[:2])
-df_cc_list_tmp["join_key"] = (
-    df_cc_list_tmp[["hrg_group", "Code"]].agg("_".join, axis=1)
-)
-df_cc_list_tmp = df_cc_list_tmp[["join_key", "Value"]]
-
-#Join the episode code data to the cc list data to get value per episode code
-df_episode_icd_working = df_episode_icd_working.merge(
-    df_cc_list_tmp, left_on="join_key", right_on="join_key")
-
-df_episode_icd_working["Value"] = df_episode_icd_working['Value'].fillna(0)
-df_episode_icd_working["pid"] = df_episode_icd_working["PRIMARYKEY_ID"]
-```
-
-Derrive count of comorbidities and total CC Score
-
-```{python}
-df_episode_icd_agg = df_episode_icd_working.groupby(["pid"]).agg(
-    count_comorbidities = ("pid", "size"),
-    cc_score = ("Value", "sum")
-).reset_index()
-
-```
-
-```{python}
 #Merge CC data with working data frame
-df_working_withcc = df_working.merge(
+df_working = df_working.merge(
     df_episode_icd_agg, left_on="pid", right_on="pid")
 
 #Extract data to test ccr compliance
 #df_working_withcc.to_csv("ccr_compliance.csv")
 ```
 
+#### Create Base Dataframes for Provider and Site Level Data
 ```{python}
+#Create a copy of the patient level df
+df_hierarchy_base = df_working.copy()
 
+#Strip uneeded columns
+df_hierarchy_base = df_hierarchy_base[["provider_code", "site_code", 
+    "date_year", "date_month"]]
+
+#Create the site level table
+df_site_base = df_hierarchy_base.drop_duplicates(keep="first", inplace=False)
+df_site_base.reset_index(inplace=True, drop=True)
+
+#Create the trust level table
+df_trust_base = df_hierarchy_base[["provider_code", "date_year", "date_month"]]
+df_trust_base = df_trust_base.drop_duplicates(keep="first", inplace=False)
+df_trust_base.reset_index(inplace=True, drop=True)
+```
+
+#### Provider Level Datasets
+
+Hospital Acquired Infections
+```{python}
+df_hospital_infections = load_data(settings, "hospital_infections_script", "sql", engine)
+```
+
+Join trust level data to base df
+```{python}
+df_trust_working = df_trust_base.copy()
+
+df_trust_working = pd.merge(
+    df_trust_working, df_hospital_infections, on=["provider_code", "date_year", "date_month"])
+
+```
+
+#### Site Level Datasets
+
+Join site level data to base df
+```{python}
+df_site_working = df_site_base.copy()
+
+#This is where the site level datasets would go if I had any
+```
+
+#### Collate hierarchy into single dataset
+
+Combine the trust level df into the site level df
+```{python}
+df_site_collated = pd.merge(df_site_working, df_trust_working, 
+    on=["provider_code", "date_year", "date_month"])
+```
+
+Combine the site level df into the patient level df
+```{python}
+df_collated = pd.merge(df_working, df_site_collated,
+    on=["provider_code", "site_code", "date_year", "date_month"])
 ```

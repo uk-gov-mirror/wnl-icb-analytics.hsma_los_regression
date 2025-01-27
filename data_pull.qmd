@@ -41,6 +41,9 @@ def load_settings():
         "hospital_infections_script":
                             ("./" + config["struct"]["script_dir"] + 
                             config["data_scripts"]["ds_hospital_infections"]),
+        "beds_script":
+                            ("./" + config["struct"]["script_dir"] + 
+                            config["data_scripts"]["ds_beds"]),
 
         #Structure Information
         "hrg_trim_days_column_el": config["struct"]["hrg_trim_days_column_el"],

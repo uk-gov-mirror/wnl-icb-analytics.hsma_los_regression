@@ -12,9 +12,10 @@ hrg_trim_days_column_el = "Ordinary \nelective long \nstay trim point \n(days)"
 hrg_trim_days_column_nel = "Non-elective \nlong stay \ntrim point \n(days)"
 
 [data_scripts]
-ds_sus_spell = "sus_spell_data_dev.sql"
-ds_sus_episode_icd_data = "sus_dominant_eipsode_icd_data_dev.sql"
-ds_hospital_infections = "hospital_acquired_infections_hospitalonset.sql"
+ds_sus_spell = "patient_sus_spell_data_dev.sql"
+ds_sus_episode_icd_data = "patient_sus_icd_data_dev.sql"
+ds_hospital_infections = "trust_hospitalinfections_data_ho.sql"
+ds_beds = "site_bed_data.sql"
 
 [data_files]
 ds_hrg_trim = "hrg_trim_data.csv"

@@ -1,3 +1,5 @@
+/*Script to pull provider level data on Hospital Acquired Infections*/
+--Note this is pulling "Hospital-onset, healthcare associated" figures but this may change to "Total Cases" later.
 SELECT
 	[Year] AS [date_year], [Month] AS [date_month],
 	[Organisation code] AS [provider_code], 

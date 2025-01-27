@@ -99,10 +99,11 @@ engine = db_connect(settings["sql_address"], settings["sql_database"])
 df_sus_spell = load_data(settings, "sus_spell_script", "sql", engine)
 
 #Convert date into month and year
+df_sus_spell["date_full"] = df_sus_spell["admission_date"]
 df_sus_spell["date_year"] = pd.DatetimeIndex(
-    df_sus_spell["admission_date"]).year
+    df_sus_spell["date_full"]).year
 df_sus_spell["date_month"] = pd.DatetimeIndex(
-    df_sus_spell["admission_date"]).month
+    df_sus_spell["date_full"]).month
 ```
 
 #### Patient Level Datasets
@@ -236,14 +237,15 @@ df_hierarchy_base = df_working.copy()
 
 #Strip uneeded columns
 df_hierarchy_base = df_hierarchy_base[["provider_code", "site_code", 
-    "date_year", "date_month"]]
+    "date_year", "date_month", "date_full"]]
 
 #Create the site level table
 df_site_base = df_hierarchy_base.drop_duplicates(keep="first", inplace=False)
 df_site_base.reset_index(inplace=True, drop=True)
 
 #Create the trust level table
-df_trust_base = df_hierarchy_base[["provider_code", "date_year", "date_month"]]
+df_trust_base = df_hierarchy_base[["provider_code", 
+    "date_year", "date_month", "date_full"]]
 df_trust_base = df_trust_base.drop_duplicates(keep="first", inplace=False)
 df_trust_base.reset_index(inplace=True, drop=True)
 ```
@@ -278,11 +280,11 @@ df_site_working = df_site_base.copy()
 Combine the trust level df into the site level df
 ```{python}
 df_site_collated = pd.merge(df_site_working, df_trust_working, 
-    on=["provider_code", "date_year", "date_month"])
+    on=["provider_code", "date_year", "date_month", "date_full"])
 ```
 
 Combine the site level df into the patient level df
 ```{python}
 df_collated = pd.merge(df_working, df_site_collated,
-    on=["provider_code", "site_code", "date_year", "date_month"])
+    on=["provider_code", "site_code", "date_year", "date_month", "date_full"])
 ```

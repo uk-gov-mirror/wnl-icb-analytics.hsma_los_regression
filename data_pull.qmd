@@ -50,6 +50,9 @@ def load_settings():
         "beds_script":
                             ("./" + config["struct"]["script_dir"] + 
                             config["data_scripts"]["ds_beds"]),
+        "medically_optimised_script":
+                            ("./" + config["struct"]["script_dir"] + 
+                            config["data_scripts"]["ds_mos"]),
 
         #Structure Information
         "hrg_trim_days_column_el": config["struct"]["hrg_trim_days_column_el"],
@@ -300,12 +303,31 @@ df_beds["date_full"] = pd.to_datetime(
     df_beds["date_full"]).dt.date
 ```
 
+Medically Optimised
+```{python}
+#Commented out due to too much missing data
+
+# df_mo = load_data(settings, "medically_optimised_script", "sql", engine)
+# df_mo["date_full"] = pd.to_datetime(
+#     df_mo["date_full"]).dt.date
+```
+
 Join site level data to base df
 ```{python}
 df_site_working = df_site_base.copy()
 
 df_site_working = pd.merge(
     df_site_working, df_beds, on=["provider_code", "site_code", "date_full"])
+
+# #Add dynamic join column for the mo data
+# df_site_working["mo_join"] = df_site_working.apply(
+#     lambda row: 
+#     row["provider_code"] if row["site_code"] not in ["RAL26", "RAL27", "RALC7"] 
+#     else row["site_code"], 
+#     axis=1)
+
+# df_site_working = pd.merge(
+#     df_site_working, df_mo, on=["mo_join", "date_full"])
 ```
 
 #### Collate hierarchy into single dataset

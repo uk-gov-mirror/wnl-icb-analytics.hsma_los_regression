@@ -18,6 +18,7 @@ ds_hospital_infections = "trust_hospitalinfections_data_ho.sql"
 ds_workforce_sickness = "trust_sickness_data_allstaff.sql"
 ds_workforce_vacancy = "trust_vacancy_data_allstaff.sql"
 ds_beds = "site_bed_data.sql"
+ds_mos = "site_medically_optimised.sql"
 
 [data_files]
 ds_hrg_trim = "hrg_trim_data.csv"

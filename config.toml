@@ -15,6 +15,7 @@ hrg_trim_days_column_nel = "Non-elective \nlong stay \ntrim point \n(days)"
 ds_sus_spell = "patient_sus_spell_data_dev.sql"
 ds_sus_episode_icd_data = "patient_sus_icd_data_dev.sql"
 ds_hospital_infections = "trust_hospitalinfections_data_ho.sql"
+ds_workforce_sickness = "trust_sickness_data_allstaff.sql"
 ds_beds = "site_bed_data.sql"
 
 [data_files]

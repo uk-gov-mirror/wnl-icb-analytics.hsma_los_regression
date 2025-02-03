@@ -41,6 +41,9 @@ def load_settings():
         "hospital_infections_script":
                             ("./" + config["struct"]["script_dir"] + 
                             config["data_scripts"]["ds_hospital_infections"]),
+        "workforce_sickness_script":
+                            ("./" + config["struct"]["script_dir"] + 
+                            config["data_scripts"]["ds_workforce_sickness"]),
         "beds_script":
                             ("./" + config["struct"]["script_dir"] + 
                             config["data_scripts"]["ds_beds"]),
@@ -261,6 +264,11 @@ Hospital Acquired Infections
 df_hospital_infections = load_data(settings, "hospital_infections_script", "sql", engine)
 ```
 
+Workforce Sickness
+```{python}
+df_workforce_sickness = load_data(settings, "workforce_sickness_script", "sql", engine)
+```
+
 Join trust level data to base df
 ```{python}
 df_trust_working = df_trust_base.copy()
@@ -268,6 +276,8 @@ df_trust_working = df_trust_base.copy()
 df_trust_working = pd.merge(
     df_trust_working, df_hospital_infections, on=["provider_code", "date_year", "date_month"])
 
+df_trust_working = pd.merge(
+    df_trust_working, df_workforce_sickness, on=["provider_code", "date_year", "date_month"])
 ```
 
 #### Site Level Datasets

@@ -26,6 +26,8 @@ def load_settings():
         #SQL Connection settings
         "sql_address": getenv("SQL_ADDRESS"),
         "sql_database": config["database"]["sql_database"],
+        "sql_destination_schema": config["database"]["sql_destination_schema"],
+        "sql_destination_table": config["database"]["sql_destination_table"],
 
         #Data to pull
         "hrg_trim_file":    ("./" + config["struct"]["data_dir"] +
@@ -140,6 +142,7 @@ df_episode_icd_working = df_episode_icd_working.merge(
 
 #Convert to HRG Code to HRG Group (First few non-numeric characters)
 #Note, my understanding from the CC List data is some HRG Groups are longer than 2 characters but I couldn't find an example in the data
+df_episode_icd_working["hrg_code"] = df_episode_icd_working["hrg_code"].fillna("")
 df_episode_icd_working["hrg_group"] = (
     df_episode_icd_working["hrg_code"].apply(lambda x: x[:2]))
 df_episode_icd_working["join_key"] = (
@@ -342,4 +345,77 @@ Combine the site level df into the patient level df
 ```{python}
 df_collated = pd.merge(df_working, df_site_collated,
     how="left", on=["provider_code", "site_code", "date_year", "date_month", "date_full"])
+```
+
+
+## Output the Processed Data
+
+```{python}
+#Function to upload data for a given dataset
+def upload_data(df, engine, settings):
+
+    #Load destination table name
+    sql_database = settings["sql_database"]
+    sql_schema = settings["sql_destination_schema"]
+    sql_table = settings["sql_destination_table"]
+
+    #Upload the processed data
+    batch_size = 200
+    
+            
+    rows = df.to_dict(orient="records")
+
+    query_exists = text(
+    "SELECT * FROM sys.schemas AS s " +
+    "INNER JOIN sys.tables AS t " +
+    "ON s.schema_id = t.schema_id " +
+    f"WHERE s.name = '{sql_schema}' "
+    f"AND  t.name = '{sql_table}'"
+    )
+
+    with engine.connect() as con:
+        #Set the database
+        con.execute(text(f"USE {sql_database};"))
+
+        #Check if the table already exists
+        res = con.execute(query_exists)
+
+        #If the destination table already exists then DROP it
+        if len(res.fetchall()) > 0:
+            #Create delete query to remove existing data for this data point
+            del_query = (f"TRUNCATE TABLE "
+                        f"[{sql_database}].[{sql_schema}].[{sql_table}] ")
+    
+            #Delete existing data from the destination
+            con.execute(text(del_query))
+
+        #Create the table
+        else:
+            pass
+        
+        #Set meta data
+        metadata = MetaData(schema=sql_schema)
+        metadata.reflect(bind=engine)
+        sqlalc_table = metadata.tables[sql_schema + '.' + sql_table]
+
+        #Group the data into batches and upload
+        for i in range(0, len(rows), batch_size):
+            batch = rows[i:i+batch_size]
+            result = con.execute(
+                insert(sqlalc_table),
+                batch
+            )
+            print(i)
+
+        con.commit()
+
+    #Archive the file after upload if enabled
+    if settings["data_archive"]:
+        archive_file(sf, settings)
+
+```
+
+```{python}
+# Commented out as it is slow to upload (several hours)
+#print(upload_data(df_collated, engine, settings))
 ```

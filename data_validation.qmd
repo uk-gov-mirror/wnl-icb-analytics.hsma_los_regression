@@ -1,0 +1,15 @@
+### Data Validation
+
+Load the data
+
+Completeness check (Overall)
+
+Completeness check (by site)
+
+Review categorical columns (unique values of text columns)
+
+Review distribution of columns (categorical)
+
+Review distribution of columns (continuous)
+
+Heatmap

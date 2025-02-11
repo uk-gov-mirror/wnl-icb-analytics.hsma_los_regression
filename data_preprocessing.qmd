@@ -1,0 +1,18 @@
+### Data Pre-processing
+
+Load the data
+
+Split into test and train sets
+(Handle the sample imbalance in the same step?)
+
+Numerically encode categorical features
+
+Make adjustments to missing data
+
+Make adjustments to invalid data
+
+Nomralise/standardise features
+
+Derrive new variables
+
+Remove columns of non-features

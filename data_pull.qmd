@@ -136,6 +136,21 @@ df_tmp = df_sus_spell.copy()[["pid", "hrg_code"]]
 df_episode_icd_working = df_episode_icd.copy()
 df_cc_list_tmp = df_cc_list.copy()
 
+##Clean the cc_list data
+df_cc_list_tmp = df_cc_list.copy()
+
+#Remove suffix of the list ID
+df_cc_list_tmp["hrg_group"] = df_cc_list_tmp["List ID"].apply(
+    lambda x: x.split("_")[0])
+
+#Split longer items into multiple rows
+def split_hrg_group(code):
+    return [code[i:i+2] for i in range(0, len(code), 2)]
+
+df_cc_list_tmp["hrg_group"] = df_cc_list_tmp["hrg_group"].apply(split_hrg_group)
+df_cc_list_tmp = df_cc_list_tmp.explode("hrg_group", ignore_index=True)
+
+
 #Merge with the SUS data to get HRG information for the spell
 df_episode_icd_working = df_episode_icd_working.merge(
     df_tmp, how="left", left_on="PRIMARYKEY_ID", right_on="pid")
@@ -149,8 +164,7 @@ df_episode_icd_working["join_key"] = (
     df_episode_icd_working[["hrg_group", "code"]].agg("_".join, axis=1)
 )
 
-#Modify CC List "List ID" to hrg_group
-df_cc_list_tmp["hrg_group"] = df_cc_list["List ID"].apply(lambda x: x[:2])
+#Create a join key using the hrg_group and code
 df_cc_list_tmp["join_key"] = (
     df_cc_list_tmp[["hrg_group", "Code"]].agg("_".join, axis=1)
 )
@@ -417,5 +431,5 @@ def upload_data(df, engine, settings):
 
 ```{python}
 # Commented out as it is slow to upload (several hours)
-#print(upload_data(df_collated, engine, settings))
+#upload_data(df_collated, engine, settings)
 ```

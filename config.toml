@@ -1,6 +1,7 @@
 title = "HSMA LOS REGRESSION"
 
 [database]
+sql_dsn = "SANDPIT"
 sql_database = "Data_Lab_NCL_Dev"
 sql_destination_schema = "JakeK"
 sql_destination_table = "los_regression_processed"

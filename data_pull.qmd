@@ -4,8 +4,6 @@ Library imports
 #Import packages
 import pandas as pd
 import toml
-from dotenv import load_dotenv
-from os import getenv
 
 #SQL Database Imports
 from sqlalchemy import create_engine, MetaData, text, insert
@@ -24,7 +22,7 @@ def load_settings():
 
     settings = {
         #SQL Connection settings
-        "sql_address": getenv("SQL_ADDRESS"),
+        "sql_dsn": config["database"]["sql_dsn"],
         "sql_database": config["database"]["sql_database"],
         "sql_destination_schema": config["database"]["sql_destination_schema"],
         "sql_destination_table": config["database"]["sql_destination_table"],
@@ -68,12 +66,13 @@ settings = load_settings()
 
 ```{python}
 #Establish a connection to the database
-def db_connect(server_address, database, 
-               server_type="mssql", driver="SQL+Server"):
+def db_connect(dsn, database):
     
     #Create Connection String
-    conn_str = (f"{server_type}://{server_address}/{database}"
-                f"?trusted_connection=yes&driver={driver}")
+    conn_str = (f"mssql+pyodbc:///"
+                f"?odbc_connect=DSN={dsn};"
+                f"DATABASE={database};"
+                f"Trusted_Connection=yes;")
     
     #Create SQL Alchemy Engine object
     engine = create_engine(conn_str, use_setinputsizes=False)
@@ -107,7 +106,7 @@ Import the data
 ```{python}
 
 #Connect to DB
-engine = db_connect(settings["sql_address"], settings["sql_database"])
+engine = db_connect(settings["sql_dsn"], settings["sql_database"])
 
 #SUS Spell data
 df_sus_spell = load_data(settings, "sus_spell_script", "sql", engine)

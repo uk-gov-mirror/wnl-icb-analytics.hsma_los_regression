@@ -1,0 +1,27 @@
+## Data Validation
+
+### Load the data
+From the sandpit data
+
+### Completeness check (Overall)
+How many rows contain a null value
+Which columns have the most missing data
+
+### Completeness check (by site)
+Are there any sites with a higher amount of missing data
+Any particular combination of site and column that has a problematic amount of missing data?
+
+### Review categorical columns (unique values of text columns)
+This isn't needed here for the current feature list but in future iterations it could be considered.
+
+### Review distribution of columns (categorical)
+For columns with catgorical values, what is the distribution of different values.
+Are any values impossible for this data set?
+Which categorical columns need grouping to prevent any one-hot translation being excessive.
+
+### Review distribution of columns (continuous)
+What is the distribution of numeric columns?
+What is this by site?
+
+### Heatmap
+Plot overall correlation in the data (note the current data set is just June 2024)

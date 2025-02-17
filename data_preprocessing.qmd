@@ -1,18 +1,31 @@
-### Data Pre-processing
+## Data Pre-processing
 
-Load the data
+### Load the data
+From the sandpit data (I don't believe I am rewriting the data in the validation step so should be able to reuse the data_pull output)
 
-Split into test and train sets
-(Handle the sample imbalance in the same step?)
+### Split into test and train sets
+Do the split (80:20)
+Account for sample imbalance (somehow)
 
-Numerically encode categorical features
+### Numerically encode categorical features
+One hot for simple features
+Decide if I am grouping the HRG Codes into one-hot categories or just relying on the cc score and trim point information
 
-Make adjustments to missing data
+### Make adjustments to missing data
+Steps dependant on data validation step
 
-Make adjustments to invalid data
+### Make adjustments to invalid data
+Steps dependant on data validation step
 
-Nomralise/standardise features
+### Nomralise/standardise features
+Normalise the numeric columns. (Discuss best way to do this, should all features be handled the same way?)
 
-Derrive new variables
+### Derrive new variables
+Does time of treatment need to be a categorical field rather than a continuous one?
+Combine POD intended and POD actual?
+Sickness rate
+Vacancy rate
 
-Remove columns of non-features
+### Remove columns of non-features
+pid, los(?), nhs_pseudo, hrg_code(?), ccr_scores(?)
+Should date_year be excluded?

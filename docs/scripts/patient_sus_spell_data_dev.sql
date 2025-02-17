@@ -37,7 +37,7 @@ FROM (
 WHERE EXISTS (
 	SELECT 1
 	FROM [Data_Lab_NCL_Dev].[dbo].[ref_Trust_vw]
-	WHERE [trust_code] = sus.[provider_code]
+	WHERE [org_code] = sus.[provider_code]
 )
 
 AND YEAR([admission_date]) = 2024 AND MONTH([admission_date]) = 6

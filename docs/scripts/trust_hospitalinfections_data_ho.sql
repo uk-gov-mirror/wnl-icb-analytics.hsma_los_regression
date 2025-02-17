@@ -6,7 +6,7 @@ SELECT
 	SUM(Figure) AS [trust_hai_cases]
 
 FROM [Data_Store_Performance].[pmct].[InfectionControlAppendReviseProvComm]
-WHERE [Organisation code] IN ('RAP', 'RAL', 'RKE', 'RRV')
+WHERE [Organisation code] IN ('RAP', 'RAL', 'RKE', 'RRV', 'RAN', 'RP4', 'RP6')
 AND [Metric] = 'Hospital-onset, healthcare associated'
 AND ([Year] >= 2021 OR ([Year] = 2022 AND [Month] > 10))
 

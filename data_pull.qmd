@@ -14,8 +14,6 @@ Load runtime settings
 ```{python}
 #Return an object containing all runtime settings
 def load_settings():
-    #Load env settings
-    load_dotenv(override=True)
 
     #Load toml settings from config
     config = toml.load("./config.toml")
@@ -301,9 +299,16 @@ df_trust_working = pd.merge(
     df_trust_working, df_hospital_infections, how="left", 
     on=["provider_code", "date_year", "date_month"])
 
+#Add dynamic join column for the sickness data
+df_trust_working["sick_join"] = df_trust_working.apply(
+    lambda row: 
+    "RAL" if row["provider_code"] == "RAP"
+    else row["provider_code"], 
+    axis=1)
+
 df_trust_working = pd.merge(
     df_trust_working, df_workforce_sickness, how="left", 
-    on=["provider_code", "date_year", "date_month"])
+    on=["sick_join", "date_year", "date_month"])
 
 df_trust_working = pd.merge(
     df_trust_working, df_workforce_vacancy, how="left", 
@@ -337,8 +342,8 @@ df_site_working = pd.merge(
 #Add dynamic join column for the mo data
 df_site_working["mo_join"] = df_site_working.apply(
     lambda row: 
-    row["provider_code"] if row["site_code"] not in ["RAL26", "RAL27", "RALC7"] 
-    else row["site_code"], 
+    row["provider_code"] if row["site_code"] not in ["RAL01", "RAL26", "RALC7"] 
+    else row["site_code"],
     axis=1)
 
 df_site_working = pd.merge(

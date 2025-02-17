@@ -1,7 +1,36 @@
 ## Data Validation
 
+### Initialise
+Library imports
+```{python}
+#Import packages
+import pandas as pd
+
+#Utils
+import src.utils.runtime as util
+import src.utils.network as net
+```
+
+Load runtime settings
+```{python}
+settings = util.load_settings()
+```
+
 ### Load the data
 From the sandpit data
+
+```{python}
+#Connect to DB
+engine = net.db_connect(settings["sql_dsn"], settings["sql_database"])
+
+query_pull = (
+    f"SELECT * FROM "
+    f"[{settings["sql_database"]}]."
+    f"[{settings["sql_destination_schema"]}]."
+    f"[{settings["sql_destination_table"]}]"
+)
+df_main = net.load_data(settings, query_pull, src_type="query", engine=engine)
+```
 
 ### Completeness check (Overall)
 How many rows contain a null value

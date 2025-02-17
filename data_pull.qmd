@@ -24,7 +24,6 @@ settings = util.load_settings()
 
 Import the data
 ```{python}
-
 #Connect to DB
 engine = net.db_connect(settings["sql_dsn"], settings["sql_database"])
 
@@ -260,73 +259,7 @@ df_collated = pd.merge(df_working, df_site_collated,
 
 
 ## Output the Processed Data
-
-```{python}
-#Function to upload data for a given dataset
-def upnet.load_data(df, engine, settings):
-
-    #Load destination table name
-    sql_database = settings["sql_database"]
-    sql_schema = settings["sql_destination_schema"]
-    sql_table = settings["sql_destination_table"]
-
-    #Upload the processed data
-    batch_size = 200
-    
-            
-    rows = df.to_dict(orient="records")
-
-    query_exists = text(
-    "SELECT * FROM sys.schemas AS s " +
-    "INNER JOIN sys.tables AS t " +
-    "ON s.schema_id = t.schema_id " +
-    f"WHERE s.name = '{sql_schema}' "
-    f"AND  t.name = '{sql_table}'"
-    )
-
-    with engine.connect() as con:
-        #Set the database
-        con.execute(text(f"USE {sql_database};"))
-
-        #Check if the table already exists
-        res = con.execute(query_exists)
-
-        #If the destination table already exists then DROP it
-        if len(res.fetchall()) > 0:
-            #Create delete query to remove existing data for this data point
-            del_query = (f"TRUNCATE TABLE "
-                        f"[{sql_database}].[{sql_schema}].[{sql_table}] ")
-    
-            #Delete existing data from the destination
-            con.execute(text(del_query))
-
-        #Create the table
-        else:
-            pass
-        
-        #Set meta data
-        metadata = MetaData(schema=sql_schema)
-        metadata.reflect(bind=engine)
-        sqlalc_table = metadata.tables[sql_schema + '.' + sql_table]
-
-        #Group the data into batches and upload
-        for i in range(0, len(rows), batch_size):
-            batch = rows[i:i+batch_size]
-            result = con.execute(
-                insert(sqlalc_table),
-                batch
-            )
-            print(i)
-
-        con.commit()
-
-    #Archive the file after upload if enabled
-    if settings["data_archive"]:
-        archive_file(sf, settings)
-
-```
-
 ```{python}
 # Commented out as it is slow to upload (several hours)
-#upnet.load_data(df_collated, engine, settings)
+#upload_data(df_collated, engine, settings)
 ```

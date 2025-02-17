@@ -14,8 +14,6 @@ Load runtime settings
 ```{python}
 #Return an object containing all runtime settings
 def load_settings():
-    #Load env settings
-    load_dotenv(override=True)
 
     #Load toml settings from config
     config = toml.load("./config.toml")
@@ -301,9 +299,16 @@ df_trust_working = pd.merge(
     df_trust_working, df_hospital_infections, how="left", 
     on=["provider_code", "date_year", "date_month"])
 
+#Add dynamic join column for the sickness data
+df_trust_working["sick_join"] = df_trust_working.apply(
+    lambda row: 
+    "RAL" if row["provider_code"] == "RAP"
+    else row["provider_code"], 
+    axis=1)
+
 df_trust_working = pd.merge(
     df_trust_working, df_workforce_sickness, how="left", 
-    on=["provider_code", "date_year", "date_month"])
+    on=["sick_join", "date_year", "date_month"])
 
 df_trust_working = pd.merge(
     df_trust_working, df_workforce_vacancy, how="left", 

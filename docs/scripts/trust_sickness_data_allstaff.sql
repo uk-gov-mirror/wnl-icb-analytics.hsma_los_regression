@@ -3,7 +3,7 @@
 ---Staff Group is filtered to all staff but may be more appropiate to use specific staff group(s) (i.e. Clinical)
 ---Potential issue with future data not including NMUH as its own organisation
 SELECT 
-	[org_code] As [provider_code],
+	[org_code] As [sick_join],
 	YEAR([date]) AS [date_year],
 	MONTH([date]) AS [date_month],
 	[days_lost] AS [sick_days_lost],

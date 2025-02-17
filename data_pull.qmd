@@ -11,6 +11,8 @@ from sqlalchemy.orm import sessionmaker
 
 #Utils
 import src.utils.runtime as util
+import src.utils.network as net
+import src.utils.comorbidities as cc
 ```
 
 Load runtime settings
@@ -18,52 +20,16 @@ Load runtime settings
 settings = util.load_settings()
 ```
 
-```{python}
-#Establish a connection to the database
-def db_connect(dsn, database):
-    
-    #Create Connection String
-    conn_str = (f"mssql+pyodbc:///"
-                f"?odbc_connect=DSN={dsn};"
-                f"DATABASE={database};"
-                f"Trusted_Connection=yes;")
-    
-    #Create SQL Alchemy Engine object
-    engine = create_engine(conn_str, use_setinputsizes=False)
-    return engine
-
-def load_data_from_query(engine, query):
-    with engine.connect() as con:
-        res = pd.read_sql_query(query, con)
-
-    return res
-
-#Function to load data
-def load_data(settings, src, src_type="sql", engine=None):
-    #Handle SQL data sources
-    if src_type == "sql":
-        #Load .sql file
-        with open(settings[src]) as file:
-            query_sql = text(file.read())
-        
-        #Execute query
-        return load_data_from_query(engine, query_sql)
-    
-    #Handle csv data sources
-    elif src_type == "csv":
-        #Return file contents
-        return pd.read_csv(settings[src])
-```
 #### Load Base SUS Data
 
 Import the data
 ```{python}
 
 #Connect to DB
-engine = db_connect(settings["sql_dsn"], settings["sql_database"])
+engine = net.db_connect(settings["sql_dsn"], settings["sql_database"])
 
 #SUS Spell data
-df_sus_spell = load_data(settings, "sus_spell_script", "sql", engine)
+df_sus_spell = net.load_data(settings, "sus_spell_script", "sql", engine)
 
 #Convert date into month and year
 df_sus_spell["date_full"] = pd.to_datetime(
@@ -80,9 +46,9 @@ Cormorbidity Data
 ```{python}
 #Load the data
 ##SUS Comorbid ICD Codes
-df_episode_icd = load_data(settings, "sus_episode_icd_script", "sql", engine)
+df_episode_icd = net.load_data(settings, "sus_episode_icd_script", "sql", engine)
 ##CC Score Data
-df_cc_list = load_data(settings, "cc_list_file", "csv")
+df_cc_list = net.load_data(settings, "cc_list_file", "csv")
 
 #Create copies of the base data frames
 df_tmp = df_sus_spell.copy()[["pid", "hrg_code"]]
@@ -140,37 +106,8 @@ df_episode_icd_agg = df_episode_icd_working.groupby(["pid"]).agg(
 HRG Trim Data
 
 ```{python}
-#Functions to extract the lower and upper bounds from the HRG Name in the Trim data
-
-#Function to extract the CC Score Range from the HRG Name in the Trim Point data
-def get_score_from_name(name):
-    split_name = name.split("CC Score ")
-    if len(split_name) == 1:
-        return None
-    else:
-        return split_name[1]
-
-#Function to seperate out the upper and lower bounds of the CC Score Ranges
-def get_lower_and_upper(ccr, upper=0):
-
-    #Case 1: No CC Score Range
-    if ccr is None:
-        return None
-    #Case 2: CC Score has upper and lower bound
-    if "-" in ccr:
-        return ccr.split("-")[upper]
-    #Case 3: Lower Bound with no upper bound
-    if "+" in ccr:
-        if not upper:
-            return ccr[:-1]
-        else:
-            return None
-    #Case 4: CC Score Range is a single value
-    else:
-        return ccr
-
 #Load HRG Trim data
-df_hrg_trim = load_data(settings, "hrg_trim_file", "csv")
+df_hrg_trim = net.load_data(settings, "hrg_trim_file", "csv")
 
 #Clean HRG data
 df_hrg_trim_clean = df_hrg_trim[["HRG Code", "HRG Name", 
@@ -181,11 +118,11 @@ df_hrg_trim_clean.columns = ["hrg_code", "hrg_name",
 
 #Derrive the lower and upper bounds
 df_hrg_trim_clean["cc_range"] = df_hrg_trim_clean["hrg_name"].apply(
-    get_score_from_name)
+    cc.get_score_from_name)
 df_hrg_trim_clean["ccr_lower"] = df_hrg_trim_clean.loc[:, "cc_range"].apply(
-    get_lower_and_upper)
+    cc.get_lower_and_upper)
 df_hrg_trim_clean["ccr_upper"] = df_hrg_trim_clean.loc[:, "cc_range"].apply(
-    get_lower_and_upper, args=[1])
+    cc.get_lower_and_upper, args=[1])
 
 #Remove unused columns
 df_hrg_trim_clean = df_hrg_trim_clean[["hrg_code", "hrg_trim_days_el", 
@@ -234,17 +171,17 @@ df_trust_base.reset_index(inplace=True, drop=True)
 
 Hospital Acquired Infections
 ```{python}
-df_hospital_infections = load_data(settings, "hospital_infections_script", "sql", engine)
+df_hospital_infections = net.load_data(settings, "hospital_infections_script", "sql", engine)
 ```
 
 Workforce Sickness
 ```{python}
-df_workforce_sickness = load_data(settings, "workforce_sickness_script", "sql", engine)
+df_workforce_sickness = net.load_data(settings, "workforce_sickness_script", "sql", engine)
 ```
 
 Workforce Vacancy
 ```{python}
-df_workforce_vacancy = load_data(settings, "workforce_vacancy_script", "sql", engine)
+df_workforce_vacancy = net.load_data(settings, "workforce_vacancy_script", "sql", engine)
 ```
 
 Join trust level data to base df
@@ -275,14 +212,14 @@ df_trust_working = pd.merge(
 
 Bed Occupancy
 ```{python}
-df_beds = load_data(settings, "beds_script", "sql", engine)
+df_beds = net.load_data(settings, "beds_script", "sql", engine)
 df_beds["date_full"] = pd.to_datetime(
     df_beds["date_full"]).dt.date
 ```
 
 Medically Optimised
 ```{python}
-df_mo = load_data(settings, "medically_optimised_script", "sql", engine)
+df_mo = net.load_data(settings, "medically_optimised_script", "sql", engine)
 df_mo["date_full"] = pd.to_datetime(
     df_mo["date_full"]).dt.date
 ```
@@ -326,7 +263,7 @@ df_collated = pd.merge(df_working, df_site_collated,
 
 ```{python}
 #Function to upload data for a given dataset
-def upload_data(df, engine, settings):
+def upnet.load_data(df, engine, settings):
 
     #Load destination table name
     sql_database = settings["sql_database"]
@@ -391,5 +328,5 @@ def upload_data(df, engine, settings):
 
 ```{python}
 # Commented out as it is slow to upload (several hours)
-#upload_data(df_collated, engine, settings)
+#upnet.load_data(df_collated, engine, settings)
 ```

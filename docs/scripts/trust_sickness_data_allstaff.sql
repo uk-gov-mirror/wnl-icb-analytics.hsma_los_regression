@@ -12,4 +12,4 @@ SELECT
 FROM [Data_Lab_NCL_Dev].[JakeK].[wf_sickness_vw]
 
 WHERE [staffgroup] = 'All staff groups'
-AND [org_code] IN ('RAL', 'RAP', 'RRV', 'RKE') 
+AND [org_code] IN ('RAL', 'RAP', 'RRV', 'RKE', 'RAN', 'RP4', 'RP6') 

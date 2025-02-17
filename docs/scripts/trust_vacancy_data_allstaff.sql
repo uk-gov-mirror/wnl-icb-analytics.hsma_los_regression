@@ -23,4 +23,4 @@ LEFT JOIN Org_map om
 ON vac.[org_code] = om.[source_code]
 
 WHERE [type] = 'Total'
-AND [org_code] IN ('RAL', 'RRV', 'RKE')
+AND [org_code] IN ('RAL', 'RRV', 'RKE', 'RAN', 'RP4', 'RP6')

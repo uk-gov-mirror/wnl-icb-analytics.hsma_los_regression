@@ -14,7 +14,7 @@ FROM (
 		[MetricName], [Value]
 
 	FROM [Data_Store_UDAL].[UDAL].[UDAL_Daily_sitrep]
-	WHERE OrgCode IN ('RAL', 'RAP', 'RKE', 'RRV')
+	WHERE OrgCode IN ('RAL', 'RAP', 'RKE', 'RRV', 'RAN', 'RP4', 'RP6')
 ) src
 
 PIVOT (

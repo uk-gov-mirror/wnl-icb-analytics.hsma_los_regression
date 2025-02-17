@@ -342,8 +342,8 @@ df_site_working = pd.merge(
 #Add dynamic join column for the mo data
 df_site_working["mo_join"] = df_site_working.apply(
     lambda row: 
-    row["provider_code"] if row["site_code"] not in ["RAL26", "RAL27", "RALC7"] 
-    else row["site_code"], 
+    row["provider_code"] if row["site_code"] not in ["RAL01", "RAL26", "RALC7"] 
+    else row["site_code"],
     axis=1)
 
 df_site_working = pd.merge(

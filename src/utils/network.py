@@ -35,6 +35,10 @@ def load_data(settings, src, src_type="sql", engine=None):
         #Execute query
         return load_data_from_query(engine, query_sql)
     
+    #Execute a SFW string
+    elif src_type == "query":
+        return load_data_from_query(engine, text(src))
+    
     #Handle csv data sources
     elif src_type == "csv":
         #Return file contents

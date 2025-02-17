@@ -24,7 +24,6 @@ FROM (
 		[spell.patient.identity.age_on_admission] AS [patient_age],
 		--POD
 		[spell.admission.intended_management] AS [pod_intended],
-		[spell.admission.admission_type] AS [pod_actual],
 		--HRG
 		[spell.commissioning.grouping.core_hrg] AS [hrg_code],
 		--Admission Context

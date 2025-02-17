@@ -20,11 +20,12 @@ Steps dependant on data validation step
 ### Nomralise/standardise features
 Normalise the numeric columns. (Discuss best way to do this, should all features be handled the same way?)
 
-### Derrive new variables
+### Derive new variables
 Does time of treatment need to be a categorical field rather than a continuous one?
 Combine POD intended and POD actual?
 Sickness rate
 Vacancy rate
+Occupancy rate
 
 ### Remove columns of non-features
 pid, los(?), nhs_pseudo, hrg_code(?), ccr_scores(?)

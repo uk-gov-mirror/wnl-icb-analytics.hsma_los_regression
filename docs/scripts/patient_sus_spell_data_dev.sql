@@ -39,4 +39,7 @@ WHERE EXISTS (
 	WHERE [org_code] = sus.[provider_code]
 )
 
+--Limit data to non-regular activity
+AND pod_intended IN (1, 2)
+
 AND YEAR([admission_date]) = 2024 AND MONTH([admission_date]) = 6

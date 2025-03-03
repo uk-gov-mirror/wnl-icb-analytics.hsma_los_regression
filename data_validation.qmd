@@ -39,23 +39,72 @@ df_main = df_main.drop("admission_time", axis=1)
 ```
 
 ### Completeness check (Overall)
-How many rows contain a null value
+
+Describe data pull
 ```{python}
 df_main.describe()
 ```
 
+How many rows contain a null value
 ```{python}
 rows_with_null = df_main.isnull().any(axis=1).sum()
 percentage = (rows_with_null / len(df_main)) * 100
+print(percentage)
 ```
 
 Which columns have the most missing data
 ```{python}
 completeness = (df_main.notnull().sum() / len(df_main)) * 100
-
-# Convert to DataFrame for better readability
 summary_df = completeness.to_frame(name='Completeness %')
+
+summary_df
 ```
+
+Observation: 6% of rows have a NULL Trim days value
+Analysis:
+- Some regular attendance codes are labelled as daycase for the intended management (LA97B [GOSH Reporting])
+- Some HRG Codes are to identify when the treatment was not carried out or failed (WH50x, WH01C)
+- Some activity are for maternity (NZxxx) or Mental Health Disorders (WDxxx, PT52x, PT53x) or COVID (DXxxx)
+- Some activity are for new treatments with no established trim points (SA - Peripheral Blood Stem Cell and Bone Marrow Transplant)
+- Some codes seem like they should have codes and do in previous years (AA82Z)
+- BZ35x - Bilateral Cataract, exception due to multiple possible treatments with difference in serverity and risk
+- PD13x - Paediatric Cystic Fibrosis, funded directly by NHSE so does not appear in the trim point data.
+- WH21x, WH22x - Intoxication is too low impact to introduct trim points for these HRGs
+Action: 
+- Filter out activity with no HRG Trim point for 24/25
+- Explore reason for missing AA82Z trim point in the latest year
+```{python}
+df_ob1 = df_main[df_main["hrg_trim_days_el"].isna()]
+
+#Filter out HRG Codes without trim points
+ob1_filter = ["LA97B", "WH50A", "WH50B", "BZ35A", "BZ35B", "AA82Z", "PT52A", "PT53A", "WH01C"]
+df_ob1 = df_ob1[~df_ob1["hrg_code"].isin(ob1_filter)]
+#Filter out Maternity activity
+df_ob1 = df_ob1[~df_ob1["hrg_code"].str.startswith("NZ")]
+#Filter out Mental Health activity
+df_ob1 = df_ob1[~df_ob1["hrg_code"].str.startswith("WD")]
+#Filter out COVID activity
+df_ob1 = df_ob1[~df_ob1["hrg_code"].str.startswith("DX")]
+#Filter out Paediatric Cystic Fibrosis activity
+df_ob1 = df_ob1[~df_ob1["hrg_code"].str.startswith("PD13")]
+#Filter out Acute Drug Intoxication
+df_ob1 = df_ob1[~df_ob1["hrg_code"].str.startswith("WH22")]
+#Filter out Acute Alcohol Intoxication
+df_ob1 = df_ob1[~df_ob1["hrg_code"].str.startswith("WH21")]
+
+
+#Filter out Peripheral Blood Stem Cell and Bone Marrow Transplant activity
+##Note: This would filter out other activity in the main dataframe
+df_ob1 = df_ob1[~df_ob1["hrg_code"].str.startswith("SA")]
+
+#With the above filters, only few one-off cases remain. 
+#Can safely reduce this by filtering out data with a NULL trim point but need to
+#explore AA82Z
+
+#df_ob1
+
+```
+
 
 ### Completeness check (by site)
 Are there any sites with a higher amount of missing data

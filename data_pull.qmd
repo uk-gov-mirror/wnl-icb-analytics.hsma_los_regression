@@ -136,6 +136,10 @@ df_working["hrg_code"] = df_working["hrg_code"].astype(str)
 df_working = df_working.merge(
     df_hrg_trim_clean, how="left", left_on="hrg_code", right_on="hrg_code")
 
+##Filter out data with no HRG Trim data. 
+##See commit cadf52e22e50b64b7074446f05ded53fd8ef3013 for details.
+df_working = df_working[~df_working["hrg_trim_days_el"].isnull()]
+
 #Merge CC data with working data frame
 df_working = df_working.merge(
     df_episode_icd_agg, how="left", left_on="pid", right_on="pid")

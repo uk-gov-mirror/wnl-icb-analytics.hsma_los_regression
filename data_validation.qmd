@@ -1,11 +1,61 @@
 ## Data Validation
 
+### Initialise
+Library imports
+```{python}
+#Import packages
+import pandas as pd
+
+#Utils
+import src.utils.runtime as util
+import src.utils.network as net
+```
+
+Load runtime settings
+```{python}
+settings = util.load_settings()
+```
+
 ### Load the data
 From the sandpit data
 
+```{python}
+#Connect to DB
+engine = net.db_connect(settings["sql_dsn"], settings["sql_database"])
+
+query_pull = (
+    f"SELECT * FROM "
+    f"[{settings["sql_database"]}]."
+    f"[{settings["sql_destination_schema"]}]."
+    f"[{settings["sql_destination_table"]}]"
+)
+df_main = net.load_data(settings, query_pull, src_type="query", engine=engine)
+
+#Remove ccr columns
+df_main = df_main.drop(columns=["ccr_lower", "ccr_upper"])
+
+#Remove admission time due to poor completeness
+df_main = df_main.drop("admission_time", axis=1)
+```
+
 ### Completeness check (Overall)
 How many rows contain a null value
+```{python}
+df_main.describe()
+```
+
+```{python}
+rows_with_null = df_main.isnull().any(axis=1).sum()
+percentage = (rows_with_null / len(df_main)) * 100
+```
+
 Which columns have the most missing data
+```{python}
+completeness = (df_main.notnull().sum() / len(df_main)) * 100
+
+# Convert to DataFrame for better readability
+summary_df = completeness.to_frame(name='Completeness %')
+```
 
 ### Completeness check (by site)
 Are there any sites with a higher amount of missing data

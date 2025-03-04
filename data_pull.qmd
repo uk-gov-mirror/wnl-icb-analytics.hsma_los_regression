@@ -201,6 +201,8 @@ df_trust_working = pd.merge(
     df_trust_working, df_workforce_sickness, how="left", 
     on=["sick_join", "date_year", "date_month"])
 
+df_trust_working.drop("sick_join", axis=1, inplace=True)
+
 df_trust_working = pd.merge(
     df_trust_working, df_workforce_vacancy, how="left", 
     on=["provider_code", "date_year", "date_month"])
@@ -259,6 +261,6 @@ df_collated = pd.merge(df_working, df_site_collated,
 
 ## Output the Processed Data
 ```{python}
-# Commented out as it is slow to upload (several hours)
-#upload_data(df_collated, engine, settings)
+#Upload the data to the destination table
+net.upload_data(df_collated, engine, settings, batch_size=1600)
 ```

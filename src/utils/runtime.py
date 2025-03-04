@@ -12,6 +12,8 @@ def load_settings():
         "sql_database": config["database"]["sql_database"],
         "sql_destination_schema": config["database"]["sql_destination_schema"],
         "sql_destination_table": config["database"]["sql_destination_table"],
+        "sql_createtable": ("./" + config["struct"]["script_dir"] + 
+                            config["database"]["sql_createtable"]),
 
         #Data to pull
         "hrg_trim_file":    ("./" + config["struct"]["data_dir"] +

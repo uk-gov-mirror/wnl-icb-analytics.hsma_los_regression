@@ -2,8 +2,7 @@
 
 #Import packages
 import pandas as pd
-from sqlalchemy import create_engine, MetaData, text, insert
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, MetaData, Table, text, insert
 
 #Establish a connection to the database
 def db_connect(dsn, database):
@@ -45,19 +44,19 @@ def load_data(settings, src, src_type="sql", engine=None):
         return pd.read_csv(settings[src])
     
 #Function to upload data for a given dataset
-def upload_data(df, engine, settings):
+def upload_data(df, engine, settings, batch_size=200):
+
+    #Convert float columns to objects (Needed for dealing with NaNs)
+    df = df.astype(object).where(pd.notnull(df), None)
 
     #Load destination table name
     sql_database = settings["sql_database"]
     sql_schema = settings["sql_destination_schema"]
     sql_table = settings["sql_destination_table"]
-
-    #Upload the processed data
-    batch_size = 200
     
-            
     rows = df.to_dict(orient="records")
 
+    #Check if the destination table already exists
     query_exists = text(
     "SELECT * FROM sys.schemas AS s " +
     "INNER JOIN sys.tables AS t " +
@@ -73,7 +72,7 @@ def upload_data(df, engine, settings):
         #Check if the table already exists
         res = con.execute(query_exists)
 
-        #If the destination table already exists then DROP it
+        #If the destination table already exists then truncate it
         if len(res.fetchall()) > 0:
             #Create delete query to remove existing data for this data point
             del_query = (f"TRUNCATE TABLE "
@@ -81,16 +80,24 @@ def upload_data(df, engine, settings):
     
             #Delete existing data from the destination
             con.execute(text(del_query))
-
-        #Create the table
-        else:
-            pass
         
-        #Set meta data
-        metadata = MetaData(schema=sql_schema)
-        metadata.reflect(bind=engine)
-        sqlalc_table = metadata.tables[sql_schema + '.' + sql_table]
+        #Otherwise, create the table
+        else:
+            with open(settings["sql_createtable"]) as file:
+                create_query = text(file.read())
+            con.execute(create_query)
+        
+        #Commit changes
+        con.commit()
 
+    
+    #Bind metadata
+    metadata = MetaData()
+    sqlalc_table = Table(sql_table, metadata, 
+                            schema=sql_schema, autoload_with=engine)
+    
+    with engine.connect() as con:
+        
         #Group the data into batches and upload
         for i in range(0, len(rows), batch_size):
             batch = rows[i:i+batch_size]
@@ -98,6 +105,5 @@ def upload_data(df, engine, settings):
                 insert(sqlalc_table),
                 batch
             )
-            print(i)
 
         con.commit()

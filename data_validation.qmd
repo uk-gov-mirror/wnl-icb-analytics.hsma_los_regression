@@ -47,9 +47,13 @@ df_main.describe()
 
 How many rows contain a null value
 ```{python}
-rows_with_null = df_main.isnull().any(axis=1).sum()
-percentage = (rows_with_null / len(df_main)) * 100
-print(percentage)
+#Function to get the proportion of rows without NULL values in any column
+def overall_completeness(df):
+    rows_with_null = df.isnull().any(axis=1).sum()
+    percentage = (1 - (rows_with_null / len(df))) * 100
+    return percentage
+
+print(overall_completeness(df_main))
 ```
 
 Which columns have the most missing data
@@ -140,13 +144,12 @@ Actions:
 
 
 ```{python}
-df_ob3 = df_main.copy()
+df_ob3 = df_ob2.copy()
 
-df_ob3 = df_ob3[["provider_code", "site_code", "site_beds_open", "smart_mo", "los"]]
+df_ob3 = df_ob3[["provider_code", "site_code", "site_beds_open", "los"]]
 
 df_ob3.groupby(["provider_code", "site_code"]).agg({
     "site_beds_open": ["size", "mean"],
-    "smart_mo": ["mean"],
     "los": ["mean"]
 })
 ```

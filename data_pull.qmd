@@ -92,7 +92,7 @@ df_episode_icd_working["pid"] = df_episode_icd_working["PRIMARYKEY_ID"]
 
 #Derive count of comorbidities and total CC Score
 df_episode_icd_agg = df_episode_icd_working.groupby(["pid"]).agg(
-    count_comorbidities = ("pid", "size"),
+    count_comorbidities = ("Value", lambda x: (x > 0).sum()),
     cc_score = ("Value", "sum")
 ).reset_index()
 ```

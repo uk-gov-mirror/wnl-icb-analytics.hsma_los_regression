@@ -102,9 +102,20 @@ df_ob1 = df_ob1[~df_ob1["hrg_code"].str.startswith("SA")]
 #explore AA82Z
 
 #df_ob1
-
 ```
 
+Observation: 10% of data contains a NULL value for the count of cormorbidities
+Analysis:
+- Only 1 diagnosis: Since comorbidities only considers the non-primary diagnosis, if the patient only has a single diagnosis there are no rows in the icd table to join with for the aggregation [Solve by setting such instances to comorbidities = 0, cc_score = 0]
+- UZ01Z: Data with this HRG Code ("Data Invalid for Grouping") do not have diagnoses by definition. Can either filter this HRG out or treat it as activity with no comorbidites
+  
+Action:
+- Set count_comorbidites and cc_score to 0 when NULL
+- Review inclusion of the UZ01Z HRG Code
+
+```{python}
+df_ob2 = df_main.copy()
+```
 
 ### Completeness check (by site)
 Are there any sites with a higher amount of missing data

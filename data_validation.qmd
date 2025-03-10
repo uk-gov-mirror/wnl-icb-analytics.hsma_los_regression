@@ -181,6 +181,23 @@ summary_from_metric_name(df_main, "provider_code", overall_completeness)
 
 ### Review distribution of columns (categorical)
 For columns with catgorical values, what is the distribution of different values.
+```{python}
+categorical_columns = [
+    "hrg_code", "admission_dayofweek", "patient_gender", "patient_ethniccat",
+    "pod_intended", "admission_method", "admission_source"
+]
+
+for col in categorical_columns:
+    print(col, "- Unique:", len(list(df_main[col].unique())))
+    print(df_main.groupby(col).agg("size"))
+    print()
+
+#What about grouping HRG by first 2 digits (subchapter)?
+df_hrg = df_main.copy()
+df_hrg["hrg_sub"] = df_hrg["hrg_code"].str[0:2]
+print("hrg_sub", "- Unique:", len(list(df_hrg[col].unique())))
+print(df_hrg.groupby("hrg_sub").agg("size"))
+```
 Are any values impossible for this data set?
 Which categorical columns need grouping to prevent any one-hot translation being excessive.
 

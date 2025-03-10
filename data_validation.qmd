@@ -124,6 +124,19 @@ df_ob2.loc[(
 df_ob2.head()
 ```
 
+Observation: Site level metrics (site_beds, smart_mo) only have a completeness of 65-70%. This is because these metrics have no associated values for the non-major sites.
+```{python}
+df_ob3 = df_main.copy()
+
+df_ob3 = df_ob3[["provider_code", "site_code", "site_beds_open", "smart_mo", "los"]]
+
+df_ob3.groupby(["provider_code", "site_code"]).agg({
+    "site_beds_open": ["size", "mean"],
+    "smart_mo": ["mean"],
+    "los": ["mean"]
+})
+```
+
 ### Completeness check (by site)
 Are there any sites with a higher amount of missing data
 Any particular combination of site and column that has a problematic amount of missing data?

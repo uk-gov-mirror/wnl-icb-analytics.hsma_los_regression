@@ -56,48 +56,47 @@ def upload_data(df, engine, settings, batch_size=200):
     
     rows = df.to_dict(orient="records")
 
-    #Check if the destination table already exists
-    query_exists = text(
-    "SELECT * FROM sys.schemas AS s " +
-    "INNER JOIN sys.tables AS t " +
-    "ON s.schema_id = t.schema_id " +
-    f"WHERE s.name = '{sql_schema}' "
-    f"AND  t.name = '{sql_table}'"
-    )
+    #Check if the destination table already exists - now using EXISTS
+    query_exists = text(f"""
+        SELECT CASE WHEN EXISTS (
+            SELECT 1 FROM sys.schemas AS s 
+            INNER JOIN sys.tables AS t ON s.schema_id = t.schema_id 
+            WHERE s.name = '{sql_schema}' AND t.name = '{sql_table}'
+        ) THEN 1 ELSE 0 END
+    """)
 
     with engine.connect() as con:
         #Set the database
         con.execute(text(f"USE {sql_database};"))
 
         #Check if the table already exists
-        res = con.execute(query_exists)
+        table_exists = con.execute(query_exists).scalar()  # More direct boolean result
 
-        #If the destination table already exists then truncate it
-        if len(res.fetchall()) > 0:
+        #Is the table does not exist, create it
+        if not table_exists:
+            with open(settings["sql_createtable"]) as file:
+                create_query = text(file.read())
+            con.execute(create_query)
+        
+            #Commit changes
+            con.commit()
+
+    #Bind the metadata to the destination table
+    metadata = MetaData()
+    sqlalc_table = Table(sql_table, metadata, 
+                            schema=sql_schema, autoload_with=engine)
+
+    # Single transaction for truncate and insert to prevent empty table if inserts fail
+    with engine.begin() as con:  # Using begin() instead of connect() for transaction
+        #If the destination table existed previously truncate it
+        if table_exists:  # Using the boolean from earlier
             #Create delete query to remove existing data for this data point
             del_query = (f"TRUNCATE TABLE "
                         f"[{sql_database}].[{sql_schema}].[{sql_table}] ")
     
             #Delete existing data from the destination
             con.execute(text(del_query))
-        
-        #Otherwise, create the table
-        else:
-            with open(settings["sql_createtable"]) as file:
-                create_query = text(file.read())
-            con.execute(create_query)
-        
-        #Commit changes
-        con.commit()
 
-    
-    #Bind metadata
-    metadata = MetaData()
-    sqlalc_table = Table(sql_table, metadata, 
-                            schema=sql_schema, autoload_with=engine)
-    
-    with engine.connect() as con:
-        
         #Group the data into batches and upload
         for i in range(0, len(rows), batch_size):
             batch = rows[i:i+batch_size]
@@ -105,5 +104,3 @@ def upload_data(df, engine, settings, batch_size=200):
                 insert(sqlalc_table),
                 batch
             )
-
-        con.commit()

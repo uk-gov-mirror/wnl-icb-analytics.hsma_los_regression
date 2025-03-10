@@ -32,6 +32,9 @@ df_sus_spell["date_year"] = pd.DatetimeIndex(
     df_sus_spell["date_full"]).year
 df_sus_spell["date_month"] = pd.DatetimeIndex(
     df_sus_spell["date_full"]).month
+
+df_sus_spell["patient_ethniccat"] = df_sus_spell["patient_ethniccat"].map(
+    lambda x: x.strip() if isinstance(x, str) else x)
 ```
 
 #### Patient Level Datasets

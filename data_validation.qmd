@@ -115,6 +115,13 @@ Action:
 
 ```{python}
 df_ob2 = df_main.copy()
+
+df_ob2.loc[(
+    pd.isna(df_ob2["count_comorbidities"]), 
+    ["count_comorbidities", "cc_score"]
+    )] = 0
+
+df_ob2.head()
 ```
 
 ### Completeness check (by site)

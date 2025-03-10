@@ -25,7 +25,7 @@ CREATE TABLE [Data_Lab_NCL_Dev].[JakeK].[los_regression_processed] (
     [cc_score] INT,
     [site_beds_open] INT,
     [site_beds_occupied] INT,
-    [smart_mo] INT,
+    --[smart_mo] INT,
     [trust_hai_cases] INT,
     [sick_days_lost] FLOAT,
     [sick_days_available] FLOAT,

@@ -124,6 +124,33 @@ df_ob2.loc[(
 df_ob2.head()
 ```
 
+Observation: Site level metrics (site_beds, smart_mo) only have a completeness of 65-70%. This is because these metrics have no associated values for the non-major sites.
+Analysis:
+- There are a number of sites with no bed data and an average length of stay of 0. Such sites can be removed from the data due to there being no possibility of having overnight stay.
+- There are some instances of sites with no bed data having a very low average length of stay (~1 in 100). Such cases can be presummed to be a data quality issue and removed.
+- A small amount of CNWL data has appeared in the data. While this may involve genuine los, might be better to filter it out as the environment of community care might not be comparable to acute care.
+- UCLH data seems to include a significant amount of OP data in the APC Spell table. These OP sites have non-0 los averages which could be from data quality issues. Since the evidence suggests these sites have no beds, they should be removed from the data.
+- RRV30 -> Seperate point on UCLH, this site has bed data and non-0 los but it is not recognised as an IP site so a query has been sent out to confirm this data.
+
+Actions:
+- If the average los is 0, these sites can filtered out since they cannot possibly inccur bed days.
+- Similarly, sites with los ~0 can be treated as 0 since the non-0 offset is likely a data quality issue.
+- Pending clarification, UCLH OP sites can be removed from the data since they should not be present in it to begin with.
+- Seperate clarification is required for RRV30 before taking any action on this.
+
+
+```{python}
+df_ob3 = df_main.copy()
+
+df_ob3 = df_ob3[["provider_code", "site_code", "site_beds_open", "smart_mo", "los"]]
+
+df_ob3.groupby(["provider_code", "site_code"]).agg({
+    "site_beds_open": ["size", "mean"],
+    "smart_mo": ["mean"],
+    "los": ["mean"]
+})
+```
+
 ### Completeness check (by site)
 Are there any sites with a higher amount of missing data
 Any particular combination of site and column that has a problematic amount of missing data?

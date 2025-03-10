@@ -239,9 +239,9 @@ df_site_working["mo_join"] = df_site_working.apply(
     else row["site_code"],
     axis=1)
 
-df_site_working = pd.merge(
-    df_site_working, df_mo, 
-    how="left", on=["mo_join", "date_full"])
+# df_site_working = pd.merge(
+#     df_site_working, df_mo, 
+#     how="left", on=["mo_join", "date_full"])
 ```
 
 #### Collate hierarchy into single dataset

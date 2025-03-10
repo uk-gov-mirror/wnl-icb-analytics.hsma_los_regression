@@ -43,3 +43,16 @@ WHERE EXISTS (
 AND pod_intended IN (1, 2)
 
 AND YEAR([admission_date]) = 2024 AND MONTH([admission_date]) = 6
+
+--Remove CNWL IP data
+AND sus.[provider_code] != 'RV3'
+
+--Remove historic data mislabelling NMUH as RFL
+AND [site_code] != 'RAL27'
+
+--Remove sites known to have no beds (and therefore no possible los > 0)
+AND [site_code] NOT IN ('RAL22', 'RAL80', 'RALMV', 'S2C1J', 'Y8D9M',
+	 'W5Q6P', 
+	 'P6H6T', 'RP603', 'RP604', 'RP605', 'RP606', 'RP608', 'RP610', 
+	 'RP620', 'RP633',
+	 'J1D4C', 'RRVCC', 'RRVCL', 'RRVNC', 'RRVP5', 'RRVRH')

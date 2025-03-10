@@ -156,7 +156,28 @@ df_ob3.groupby(["provider_code", "site_code"]).agg({
 
 ### Completeness check (by site)
 Are there any sites with a higher amount of missing data
-Any particular combination of site and column that has a problematic amount of missing data?
+```{python}
+
+#Print the summary of completeness for a given metric and dataframe
+def summary_from_metric_name(df, metric, trailing=0):
+    data = list(df[metric].unique())
+
+    print(metric, "Summary:")
+    for category in data:
+
+        df_cat = df[df[metric] == category].copy()
+
+        print(
+        category, "->", 
+        overall_completeness(df_cat)
+    )
+
+    if trailing:
+        print()
+
+summary_from_metric_name(df_main, "site_code", trailing=1)
+summary_from_metric_name(df_main, "provider_code")
+```
 
 ### Review categorical columns (unique values of text columns)
 This isn't needed here for the current feature list but in future iterations it could be considered.

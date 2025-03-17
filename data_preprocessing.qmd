@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 #Utils
 import src.utils.runtime as util
 import src.utils.network as net
+import src.utils.pp_categorical_encoding as cat_enc
 ```
 
 Load runtime settings
@@ -56,7 +57,13 @@ print(y_test.value_counts()[0])
 ```
 
 ### Make adjustments to missing data
-Steps dependant on data validation step
+```{python}
+df_adj = df_base.copy()
+
+#Populate missing ethnic category data
+#[Replace NULL data with the "Unknown Ethnicity" code (X)]
+df_adj.fillna({"patient_ethniccat":"X"}, inplace=True)
+```
 
 ### Make adjustments to invalid data
 Steps dependant on data validation step
@@ -68,10 +75,22 @@ Decide if I am grouping the HRG Codes into one-hot categories or just relying on
 Standard one-hot encoding columns
 [For future iterations, comment out unused features]
 ```{python}
-# Provider Code
+df_testin = (X_train[[
+    "provider_code", 
+    "site_code", 
+    "admission_dayofweek", 
+    "hrg_trim_days_el"]]
+    )
 
 
+#Specify configuration for the categoric encoding
+config_custom = {}
+df_catenc = cat_enc.format_cat_features(df_testin, config_custom, train=True)
 
+categorical_columns = ["provider_code", "site_code", "admission_dayofweek"]
+
+#Apply one-hot encoding to all categorical columns
+df_catenc = cat_enc.apply_onehot(df_catenc, categorical_columns)
 ```
 
 ### Nomralise/standardise features

@@ -226,13 +226,13 @@ df_heat = df_heat.drop(columns=["hrg_code"])
 #Comment out columns to remove them from the heatmap
 df_heat = df_heat.drop(
     columns=[
-        #"provider_code", 
+        "provider_code", 
         "site_code", 
-        "admission_dayofweek", 
+        #"admission_dayofweek", 
         #"patient_gender",
         "patient_ethniccat",
         #"patient_age",
-        "pod_intended", 
+        #"pod_intended", 
         "admission_method",
         "admission_source",
         #"hrg_trim_days_el",
@@ -252,7 +252,7 @@ df_heat = df_heat.drop(
 
 ```{python}
 #Get encoded version of the dataframe
-df_encoded = pd.get_dummies(df_heat, drop_first=True)
+df_encoded = pd.get_dummies(df_heat, drop_first=False)
 
 # Compute the correlation matrix
 corr_matrix = df_encoded.corr()

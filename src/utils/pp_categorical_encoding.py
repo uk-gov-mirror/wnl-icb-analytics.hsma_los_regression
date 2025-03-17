@@ -3,8 +3,8 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
-#Apply one hot encoding on a given column
-def apply_onehot(df, categorical_cols):
+#Return the encoding fit using the training data
+def get_encoding_fit(df, categorical_cols):
     #Derrive continuous columns
     all_cols = list(df.columns)
     continuous_cols = [x for x in all_cols if x not in categorical_cols]
@@ -16,7 +16,14 @@ def apply_onehot(df, categorical_cols):
         ]
     )
 
-    data_encoded = preprocessor.fit_transform(df)
+    preprocessor.fit(df)
+    
+    return preprocessor
+
+#Apply the fitted preprocessor to the supplied df
+def apply_fit(df, preprocessor):
+
+    data_encoded = preprocessor.transform(df)
 
     encoded_feature_names = preprocessor.get_feature_names_out()
     df_encoded = pd.DataFrame(data_encoded, columns=encoded_feature_names)

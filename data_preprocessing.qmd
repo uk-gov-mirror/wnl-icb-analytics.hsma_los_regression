@@ -1,7 +1,9 @@
 ## Data Pre-processing
 ```{python}
 #Import packages
+import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 #Utils
 import src.utils.runtime as util
@@ -18,12 +20,30 @@ settings = util.load_settings()
 From the sandpit data
 
 ```{python}
-df_main = net.load_features(
+df_base = net.load_features(
     settings, filters=["pid", "nhs_pseudo", "ccr_lower", "ccr_upper"])
 ```
 
 ### Split into test and train sets
 Do the split (80:20)
+```{python}
+target = "los"
+
+features = list(df_base.columns)
+features.remove(target)
+
+X = df_base[features]
+y = df_base[target]
+```
+
+```{python}
+# using the train test split function 
+X_train, X_test, y_train, y_test = train_test_split(X,y , 
+                                   random_state=0,  
+                                   test_size=0.2,  
+                                   shuffle=True) 
+```
+
 Account for sample imbalance (somehow)
 
 ### Numerically encode categorical features

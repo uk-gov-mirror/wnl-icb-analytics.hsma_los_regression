@@ -22,25 +22,8 @@ settings = util.load_settings()
 From the sandpit data
 
 ```{python}
-#Connect to DB
-engine = net.db_connect(settings["sql_dsn"], settings["sql_database"])
-
-query_pull = (
-    f"SELECT * FROM "
-    f"[{settings["sql_database"]}]."
-    f"[{settings["sql_destination_schema"]}]."
-    f"[{settings["sql_destination_table"]}]"
-)
-df_main = net.load_data(settings, query_pull, src_type="query", engine=engine)
-
-#Remove id/debug columns
-df_main = df_main.drop(columns=["pid", "nhs_pseudo"])
-
-#Remove ccr columns
-df_main = df_main.drop(columns=["ccr_lower", "ccr_upper"])
-
-#Remove admission time due to poor completeness
-df_main = df_main.drop("admission_time", axis=1)
+df_main = net.load_features(
+    settings, filters=["pid", "nhs_pseudo", "ccr_lower", "ccr_upper"])
 ```
 
 ### Completeness check (Overall)

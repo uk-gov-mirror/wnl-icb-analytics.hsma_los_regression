@@ -42,7 +42,7 @@ def load_data(settings, src, src_type="sql", engine=None):
     elif src_type == "csv":
         #Return file contents
         return pd.read_csv(settings[src])
-    
+
 #Function to upload data for a given dataset
 def upload_data(df, engine, settings, batch_size=200):
 
@@ -104,3 +104,24 @@ def upload_data(df, engine, settings, batch_size=200):
                 insert(sqlalc_table),
                 batch
             )
+
+def load_features(settings, filters = []):
+    #Connect to DB
+    engine = db_connect(settings["sql_dsn"], settings["sql_database"])
+
+    query_pull = (
+        f"SELECT * FROM "
+        f"[{settings["sql_database"]}]."
+        f"[{settings["sql_destination_schema"]}]."
+        f"[{settings["sql_destination_table"]}]"
+    )
+    df_features = load_data(
+        settings, query_pull, src_type="query", engine=engine)
+
+    #Remove parameter filters
+    df_features = df_features.drop(columns=filters)
+
+    #Remove admission time due to poor completeness
+    df_features = df_features.drop("admission_time", axis=1)
+
+    return df_features

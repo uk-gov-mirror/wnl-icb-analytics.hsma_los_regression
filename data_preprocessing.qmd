@@ -23,6 +23,9 @@ From the sandpit data
 ```{python}
 df_base = net.load_features(
     settings, filters=["pid", "nhs_pseudo", "ccr_lower", "ccr_upper"])
+
+#Remove columns not planned to be used as features
+df_base.drop(["admission_date", "hrg_code", "date_full"], axis=1, inplace=True)
 ```
 
 ### Split into test and train sets
@@ -75,19 +78,23 @@ Decide if I am grouping the HRG Codes into one-hot categories or just relying on
 Standard one-hot encoding columns
 [For future iterations, comment out unused features]
 ```{python}
-df_testin = (X_train[[
-    "provider_code", 
-    "site_code", 
-    "admission_dayofweek", 
-    "hrg_trim_days_el"]]
-    )
-
-
 #Specify configuration for the categoric encoding
 config_custom = {}
-df_catenc = cat_enc.format_cat_features(df_testin, config_custom, train=True)
+df_catenc = cat_enc.format_cat_features(X_train, config_custom, train=True)
 
-categorical_columns = ["provider_code", "site_code", "admission_dayofweek"]
+#List all features that are categorical
+categorical_columns = ([
+    "provider_code", 
+    "site_code", 
+    "admission_dayofweek",
+    "patient_gender", 
+    "patient_ethniccat", 
+    "pod_intended",
+    "admission_method", 
+    "admission_source", 
+    "date_year", 
+    "date_month"
+    ])
 
 #Apply one-hot encoding to all categorical columns
 df_catenc = cat_enc.apply_onehot(df_catenc, categorical_columns)

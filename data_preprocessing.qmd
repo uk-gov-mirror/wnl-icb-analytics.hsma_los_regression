@@ -61,15 +61,49 @@ print(y_test.value_counts()[0])
 
 ### Make adjustments to missing data
 ```{python}
-df_adj = df_base.copy()
+X_train_adj = X_train.copy()
 
 #Populate missing ethnic category data
 #[Replace NULL data with the "Unknown Ethnicity" code (X)]
-df_adj.fillna({"patient_ethniccat":"X"}, inplace=True)
+X_train_adj.fillna({"patient_ethniccat":"X"}, inplace=True)
 ```
 
 ### Make adjustments to invalid data
 Steps dependant on data validation step
+
+### Derive new variables
+```{python}
+X_train_der = X_train_adj.copy()
+```
+
+Sickness rate
+```{python}
+X_train_der["sickness_rate"] = (
+    X_train_der["sick_days_lost"] / X_train_der["sick_days_available"])
+
+X_train_der.drop(
+    ["sick_days_lost", "sick_days_available"], axis=1, inplace=True)
+```
+
+Vacancy rate
+```{python}
+X_train_der["vacancy_rate"] = (
+    X_train_der["vac_vacancy"] 
+    / (X_train_der["vac_sub_sip"] + X_train_der["vac_vacancy"])
+)
+
+X_train_der.drop(
+    ["vac_vacancy", "vac_sub_sip"], axis=1, inplace=True)
+```
+
+Occupancy rate
+```{python}
+X_train_der["occupancy_rate"] = (
+    X_train_der["site_beds_occupied"] / X_train_der["site_beds_open"])
+
+X_train_der.drop(
+    ["site_beds_occupied", "site_beds_open"], axis=1, inplace=True)
+```
 
 ### Numerically encode categorical features
 One hot for simple features
@@ -80,7 +114,7 @@ Standard one-hot encoding columns
 ```{python}
 #Specify configuration for the categoric encoding
 config_custom = {}
-df_catenc = cat_enc.format_cat_features(X_train, config_custom, train=True)
+df_catenc = cat_enc.format_cat_features(X_train_der, config_custom, train=True)
 
 #List all features that are categorical
 categorical_columns = ([
@@ -103,14 +137,3 @@ df_catenc = cat_enc.apply_onehot(df_catenc, categorical_columns)
 
 ### Nomralise/standardise features
 Normalise the numeric columns. (Discuss best way to do this, should all features be handled the same way?)
-
-### Derive new variables
-Does time of treatment need to be a categorical field rather than a continuous one?
-Combine POD intended and POD actual?
-Sickness rate
-Vacancy rate
-Occupancy rate
-
-### Remove columns of non-features
-pid, los(?), nhs_pseudo, hrg_code(?), ccr_scores(?)
-Should date_year be excluded?

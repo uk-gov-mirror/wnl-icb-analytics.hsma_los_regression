@@ -55,16 +55,24 @@ print(y_train.value_counts()[0])
 print(y_test.value_counts()[0])
 ```
 
-
-### Numerically encode categorical features
-One hot for simple features
-Decide if I am grouping the HRG Codes into one-hot categories or just relying on the cc score and trim point information
-
 ### Make adjustments to missing data
 Steps dependant on data validation step
 
 ### Make adjustments to invalid data
 Steps dependant on data validation step
+
+### Numerically encode categorical features
+One hot for simple features
+Decide if I am grouping the HRG Codes into one-hot categories or just relying on the cc score and trim point information
+
+Standard one-hot encoding columns
+[For future iterations, comment out unused features]
+```{python}
+# Provider Code
+
+
+
+```
 
 ### Nomralise/standardise features
 Normalise the numeric columns. (Discuss best way to do this, should all features be handled the same way?)

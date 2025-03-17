@@ -5,6 +5,8 @@ Library imports
 ```{python}
 #Import packages
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 #Utils
 import src.utils.runtime as util
@@ -31,6 +33,9 @@ query_pull = (
 )
 df_main = net.load_data(settings, query_pull, src_type="query", engine=engine)
 
+#Remove id/debug columns
+df_main = df_main.drop(columns=["pid", "nhs_pseudo"])
+
 #Remove ccr columns
 df_main = df_main.drop(columns=["ccr_lower", "ccr_upper"])
 
@@ -47,9 +52,13 @@ df_main.describe()
 
 How many rows contain a null value
 ```{python}
-rows_with_null = df_main.isnull().any(axis=1).sum()
-percentage = (rows_with_null / len(df_main)) * 100
-print(percentage)
+#Function to get the proportion of rows without NULL values in any column
+def overall_completeness(df):
+    rows_with_null = df.isnull().any(axis=1).sum()
+    percentage = (1 - (rows_with_null / len(df))) * 100
+    return percentage
+
+print(overall_completeness(df_main))
 ```
 
 Which columns have the most missing data
@@ -140,27 +149,60 @@ Actions:
 
 
 ```{python}
-df_ob3 = df_main.copy()
+df_ob3 = df_ob2.copy()
 
-df_ob3 = df_ob3[["provider_code", "site_code", "site_beds_open", "smart_mo", "los"]]
+df_ob3 = df_ob3[["provider_code", "site_code", "site_beds_open", "los"]]
 
 df_ob3.groupby(["provider_code", "site_code"]).agg({
     "site_beds_open": ["size", "mean"],
-    "smart_mo": ["mean"],
     "los": ["mean"]
 })
 ```
 
 ### Completeness check (by site)
 Are there any sites with a higher amount of missing data
-Any particular combination of site and column that has a problematic amount of missing data?
+```{python}
 
-### Review categorical columns (unique values of text columns)
-This isn't needed here for the current feature list but in future iterations it could be considered.
+#Print the summary of completeness for a given metric and dataframe
+def summary_from_metric_name(df, metric, summation, trailing=0):
+    data = list(df[metric].unique())
+
+    print(metric, "Summary:")
+    for category in data:
+
+        df_cat = df[df[metric] == category].copy()
+
+        print(
+        category, "->", 
+        summation(df_cat)
+    )
+
+    if trailing:
+        print()
+
+summary_from_metric_name(df_main, "site_code", overall_completeness, trailing=1)
+summary_from_metric_name(df_main, "provider_code", overall_completeness)
+```
 
 ### Review distribution of columns (categorical)
 For columns with catgorical values, what is the distribution of different values.
-Are any values impossible for this data set?
+```{python}
+categorical_columns = [
+    "hrg_code", "admission_dayofweek", "patient_gender", "patient_ethniccat",
+    "pod_intended", "admission_method", "admission_source"
+]
+
+for col in categorical_columns:
+    print(col, "- Unique:", len(list(df_main[col].unique())))
+    print(df_main.groupby(col).agg("size"))
+    print()
+
+#What about grouping HRG by first 2 digits (subchapter)?
+df_hrg = df_main.copy()
+df_hrg["hrg_sub"] = df_hrg["hrg_code"].str[0:2]
+print("hrg_sub", "- Unique:", len(list(df_hrg[col].unique())))
+print(df_hrg.groupby("hrg_sub").agg("size"))
+```
 Which categorical columns need grouping to prevent any one-hot translation being excessive.
 
 ### Review distribution of columns (continuous)
@@ -169,3 +211,55 @@ What is this by site?
 
 ### Heatmap
 Plot overall correlation in the data (note the current data set is just June 2024)
+```{python}
+#Remove columns we don't want included in the heatmap
+df_heat = df_hrg.copy()
+
+#Remove date columns
+df_heat = df_heat.drop(
+    columns=["admission_date", "date_full", "date_year", "date_month"])
+
+#Remove HRG Code
+df_heat = df_heat.drop(columns=["hrg_code"])
+
+#Refine focus
+#Comment out columns to remove them from the heatmap
+df_heat = df_heat.drop(
+    columns=[
+        "provider_code", 
+        "site_code", 
+        #"admission_dayofweek", 
+        #"patient_gender",
+        "patient_ethniccat",
+        #"patient_age",
+        #"pod_intended", 
+        "admission_method",
+        "admission_source",
+        #"hrg_trim_days_el",
+        #"hrg_trim_days_nel",
+        #"count_comorbidities",
+        #"cc_score",
+        "site_beds_open",
+        "site_beds_occupied",
+        "trust_hai_cases",
+        "sick_days_lost",
+        "sick_days_available",
+        "vac_vacancy",
+        "vac_sub_sip",
+        "hrg_sub"
+        ])
+```
+
+```{python}
+#Get encoded version of the dataframe
+df_encoded = pd.get_dummies(df_heat, drop_first=False)
+
+# Compute the correlation matrix
+corr_matrix = df_encoded.corr()
+
+# Plot the heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+plt.title("Correlation Heatmap with Encoded Categorical Data")
+plt.show()
+```

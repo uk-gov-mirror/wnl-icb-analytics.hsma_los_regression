@@ -32,6 +32,9 @@ df_sus_spell["date_year"] = pd.DatetimeIndex(
     df_sus_spell["date_full"]).year
 df_sus_spell["date_month"] = pd.DatetimeIndex(
     df_sus_spell["date_full"]).month
+
+df_sus_spell["patient_ethniccat"] = df_sus_spell["patient_ethniccat"].map(
+    lambda x: x.strip() if isinstance(x, str) else x)
 ```
 
 #### Patient Level Datasets
@@ -143,6 +146,12 @@ df_working = df_working[~df_working["hrg_trim_days_el"].isnull()]
 #Merge CC data with working data frame
 df_working = df_working.merge(
     df_episode_icd_agg, how="left", left_on="pid", right_on="pid")
+
+#For data with no reported comorbidities or CC Score, set the values to 0
+df_working.loc[(
+    pd.isna(df_working["count_comorbidities"]), 
+    ["count_comorbidities", "cc_score"]
+    )] = 0
 ```
 
 #### Create Base Dataframes for Provider and Site Level Data

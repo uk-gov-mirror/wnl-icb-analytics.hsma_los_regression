@@ -66,6 +66,15 @@ X_train_adj = X_train.copy()
 #Populate missing ethnic category data
 #[Replace NULL data with the "Unknown Ethnicity" code (X)]
 X_train_adj.fillna({"patient_ethniccat":"X"}, inplace=True)
+
+#Make adjustments to account for missing data
+def adjust_missing(df):
+    df_adj = df.copy()
+
+    #Handle missing ethnic category data
+    df_adj.fillna({"patient_ethniccat":"X"}, inplace=True)
+
+    return df_adj
 ```
 
 ### Make adjustments to invalid data
@@ -105,12 +114,39 @@ X_train_der.drop(
     ["site_beds_occupied", "site_beds_open"], axis=1, inplace=True)
 ```
 
+```{python}
+#Function to derive new features in the data
+def derive_features(df):
+    #Sickness Rate
+    df["sickness_rate"] = (
+    df["sick_days_lost"] / df["sick_days_available"])
+    df.drop(
+        ["sick_days_lost", "sick_days_available"], axis=1, inplace=True)
+
+    #Vacancy Rate
+    df["vacancy_rate"] = (
+        df["vac_vacancy"] 
+        / (df["vac_sub_sip"] + df["vac_vacancy"])
+    )
+    df.drop(
+        ["vac_vacancy", "vac_sub_sip"], axis=1, inplace=True)
+
+    #Occupancy Rate
+    df["occupancy_rate"] = (
+        df["site_beds_occupied"] / df["site_beds_open"])
+    df.drop(
+        ["site_beds_occupied", "site_beds_open"], axis=1, inplace=True)
+
+    return df
+```
+
 ### Numerically encode categorical features
 One hot for simple features
 Decide if I am grouping the HRG Codes into one-hot categories or just relying on the cc score and trim point information
 
 Standard one-hot encoding columns
 [For future iterations, comment out unused features]
+Fit the transformation pipeline using the training data
 ```{python}
 #Specify configuration for the categoric encoding
 config_custom = {}
@@ -132,7 +168,9 @@ categorical_columns = ([
 
 #Apply one-hot encoding to all categorical columns
 #I simplified the code to do the numeric minmax step in this function as well
-df_catenc = cat_enc.apply_onehot(df_catenc, categorical_columns)
+preprocessor = cat_enc.get_encoding_fit(df_catenc, categorical_columns)
+
+X_train_pro = cat_enc.apply_fit(X_train_der, preprocessor)
 ```
 
 ### Nomralise/standardise features

@@ -97,6 +97,7 @@ categorical_columns = ([
     ])
 
 #Apply one-hot encoding to all categorical columns
+#I simplified the code to do the numeric minmax step in this function as well
 df_catenc = cat_enc.apply_onehot(df_catenc, categorical_columns)
 ```
 

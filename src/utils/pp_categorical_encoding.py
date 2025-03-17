@@ -1,7 +1,7 @@
 #Suite of functions for handling the encoding of categorical columns
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
 #Apply one hot encoding on a given column
 def apply_onehot(df, categorical_cols):
@@ -12,7 +12,7 @@ def apply_onehot(df, categorical_cols):
     preprocessor = ColumnTransformer(
         transformers=[
             ("cat", OneHotEncoder(drop=None, sparse_output=False), categorical_cols),
-            ("num", "passthrough", continuous_cols)
+            ("num", MinMaxScaler(), continuous_cols)
         ]
     )
 

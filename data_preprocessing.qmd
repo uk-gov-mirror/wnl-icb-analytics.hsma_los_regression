@@ -1,7 +1,26 @@
 ## Data Pre-processing
+```{python}
+#Import packages
+import pandas as pd
+
+#Utils
+import src.utils.runtime as util
+import src.utils.network as net
+```
+
+Load runtime settings
+```{python}
+settings = util.load_settings()
+```
+
 
 ### Load the data
-From the sandpit data (I don't believe I am rewriting the data in the validation step so should be able to reuse the data_pull output)
+From the sandpit data
+
+```{python}
+df_main = net.load_features(
+    settings, filters=["pid", "nhs_pseudo", "ccr_lower", "ccr_upper"])
+```
 
 ### Split into test and train sets
 Do the split (80:20)

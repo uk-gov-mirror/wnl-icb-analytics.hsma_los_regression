@@ -34,6 +34,9 @@ features.remove(target)
 
 X = df_base[features]
 y = df_base[target]
+
+strat_y = df_base.copy()[["los"]]
+strat_y["y_group"] = np.where(strat_y["los"] == 0, 0, 1)
 ```
 
 ```{python}
@@ -41,10 +44,17 @@ y = df_base[target]
 X_train, X_test, y_train, y_test = train_test_split(X,y , 
                                    random_state=0,  
                                    test_size=0.2,  
-                                   shuffle=True) 
+                                   shuffle=True,
+                                   stratify=strat_y["y_group"]) 
+```
+Account for sample imbalance (somehow)
+(Used startified sampling to ensure even distribution of 0 los and non-0 los)
+
+```{python}
+print(y_train.value_counts()[0])
+print(y_test.value_counts()[0])
 ```
 
-Account for sample imbalance (somehow)
 
 ### Numerically encode categorical features
 One hot for simple features

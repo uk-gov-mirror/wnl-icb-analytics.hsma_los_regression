@@ -1,11 +1,14 @@
 ## Data Pre-processing
 ```{python}
 #Import packages
+import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 #Utils
 import src.utils.runtime as util
 import src.utils.network as net
+import src.utils.pp_categorical_encoding as cat_enc
 ```
 
 Load runtime settings
@@ -18,34 +21,122 @@ settings = util.load_settings()
 From the sandpit data
 
 ```{python}
-df_main = net.load_features(
+df_base = net.load_features(
     settings, filters=["pid", "nhs_pseudo", "ccr_lower", "ccr_upper"])
+
+#Remove columns not planned to be used as features
+df_base.drop(["admission_date", "hrg_code", "date_full"], axis=1, inplace=True)
 ```
 
-### Split into test and train sets
-Do the split (80:20)
-Account for sample imbalance (somehow)
+### Functions for handling invalid data
+```{python}
+#Make adjustments to account for missing data
+def adjust_missing(df):
+    df_adj = df.copy()
 
-### Numerically encode categorical features
-One hot for simple features
-Decide if I am grouping the HRG Codes into one-hot categories or just relying on the cc score and trim point information
+    #Handle missing ethnic category data
+    df_adj.fillna({"patient_ethniccat":"X"}, inplace=True)
 
-### Make adjustments to missing data
-Steps dependant on data validation step
+    return df_adj
+```
 
-### Make adjustments to invalid data
-Steps dependant on data validation step
+### Functions for deriving features
+```{python}
+#Function to derive new features in the data
+def derive_features(df):
+    #Sickness Rate
+    df["sickness_rate"] = (
+    df["sick_days_lost"] / df["sick_days_available"])
+    df.drop(
+        ["sick_days_lost", "sick_days_available"], axis=1, inplace=True)
 
-### Nomralise/standardise features
-Normalise the numeric columns. (Discuss best way to do this, should all features be handled the same way?)
+    #Vacancy Rate
+    df["vacancy_rate"] = (
+        df["vac_vacancy"] 
+        / (df["vac_sub_sip"] + df["vac_vacancy"])
+    )
+    df.drop(
+        ["vac_vacancy", "vac_sub_sip"], axis=1, inplace=True)
 
-### Derive new variables
-Does time of treatment need to be a categorical field rather than a continuous one?
-Combine POD intended and POD actual?
-Sickness rate
-Vacancy rate
-Occupancy rate
+    #Occupancy Rate
+    df["occupancy_rate"] = (
+        df["site_beds_occupied"] / df["site_beds_open"])
+    df.drop(
+        ["site_beds_occupied", "site_beds_open"], axis=1, inplace=True)
 
-### Remove columns of non-features
-pid, los(?), nhs_pseudo, hrg_code(?), ccr_scores(?)
-Should date_year be excluded?
+    return df
+```
+
+### Function to handle the preprocessing application
+```{python}
+def preprocessing(df, target="los", test_size=0.2, exclude=[], cat_columns=[]):
+    #Split data into target and features
+    features = list(df.columns)
+    features.remove(target)
+
+    X = df[features]
+    y = df[target]
+
+    #Stratify the split data
+    ##Currently based on whether the target is 0 or non-0
+    stratify_mask = np.where(df.copy()[[target]] == 0, 0, 1)
+
+    #Apply test train split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, 
+        random_state=1,  
+        test_size=test_size, 
+        shuffle=True)
+        #stratify=stratify_mask)
+
+    #Adjust for missing data
+    X_train = adjust_missing(X_train)
+    #Derive new features
+    X_train = derive_features(X_train)
+
+    #Adjust for missing data
+    X_test = adjust_missing(X_test)
+    #Derive new features
+    X_test = derive_features(X_test)
+
+    #Build encoding preprocessor
+    config_custom = {}
+    df_catenc = cat_enc.format_cat_features(
+        X_train.drop(exclude, axis=1), 
+        config_custom, 
+        train=True)
+
+    preprocessor = cat_enc.get_encoding_fit(df_catenc, categorical_columns)
+
+    #Apply fit to train and test
+    X_train = cat_enc.apply_fit(X_train, preprocessor)
+    X_test = cat_enc.apply_fit(X_test, preprocessor)
+    
+    return X_train, X_test, y_train, y_test
+```
+
+### Code to execute the preprocessing
+```{python}
+#List of columns to exclude
+exclude = ([
+    "patient_gender", 
+    "patient_ethniccat", 
+    "date_year"
+])
+
+#List all features that are categorical
+categorical_columns = ([
+    "provider_code", 
+    "site_code", 
+    "admission_dayofweek",
+    "pod_intended",
+    "admission_method", 
+    "admission_source", 
+    "date_month"
+    ])
+
+X_train, X_test, y_train, y_test = preprocessing(
+    df_base, 
+    exclude=exclude, 
+    cat_columns=categorical_columns)
+```

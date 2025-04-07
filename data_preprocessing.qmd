@@ -28,45 +28,8 @@ df_base = net.load_features(
 df_base.drop(["admission_date", "hrg_code", "date_full"], axis=1, inplace=True)
 ```
 
-### Split into test and train sets
-Do the split (80:20)
+### Functions for handling invalid data
 ```{python}
-target = "los"
-
-features = list(df_base.columns)
-features.remove(target)
-
-X = df_base[features]
-y = df_base[target]
-
-strat_y = df_base.copy()[["los"]]
-strat_y["y_group"] = np.where(strat_y["los"] == 0, 0, 1)
-```
-
-```{python}
-# using the train test split function 
-X_train, X_test, y_train, y_test = train_test_split(X,y , 
-                                   random_state=0,  
-                                   test_size=0.2,  
-                                   shuffle=True,
-                                   stratify=strat_y["y_group"]) 
-```
-Account for sample imbalance (somehow)
-(Used startified sampling to ensure even distribution of 0 los and non-0 los)
-
-```{python}
-print(y_train.value_counts()[0])
-print(y_test.value_counts()[0])
-```
-
-### Make adjustments to missing data
-```{python}
-X_train_adj = X_train.copy()
-
-#Populate missing ethnic category data
-#[Replace NULL data with the "Unknown Ethnicity" code (X)]
-X_train_adj.fillna({"patient_ethniccat":"X"}, inplace=True)
-
 #Make adjustments to account for missing data
 def adjust_missing(df):
     df_adj = df.copy()
@@ -77,43 +40,7 @@ def adjust_missing(df):
     return df_adj
 ```
 
-### Make adjustments to invalid data
-Steps dependant on data validation step
-
-### Derive new variables
-```{python}
-X_train_der = X_train_adj.copy()
-```
-
-Sickness rate
-```{python}
-X_train_der["sickness_rate"] = (
-    X_train_der["sick_days_lost"] / X_train_der["sick_days_available"])
-
-X_train_der.drop(
-    ["sick_days_lost", "sick_days_available"], axis=1, inplace=True)
-```
-
-Vacancy rate
-```{python}
-X_train_der["vacancy_rate"] = (
-    X_train_der["vac_vacancy"] 
-    / (X_train_der["vac_sub_sip"] + X_train_der["vac_vacancy"])
-)
-
-X_train_der.drop(
-    ["vac_vacancy", "vac_sub_sip"], axis=1, inplace=True)
-```
-
-Occupancy rate
-```{python}
-X_train_der["occupancy_rate"] = (
-    X_train_der["site_beds_occupied"] / X_train_der["site_beds_open"])
-
-X_train_der.drop(
-    ["site_beds_occupied", "site_beds_open"], axis=1, inplace=True)
-```
-
+### Functions for deriving features
 ```{python}
 #Function to derive new features in the data
 def derive_features(df):
@@ -140,52 +67,7 @@ def derive_features(df):
     return df
 ```
 
-### Numerically encode categorical features
-One hot for simple features
-Decide if I am grouping the HRG Codes into one-hot categories or just relying on the cc score and trim point information
-
-Standard one-hot encoding columns
-[For future iterations, comment out unused features]
-Fit the transformation pipeline using the training data
-```{python}
-#List of columns to exclude
-exclude = ([
-    "patient_gender", 
-    "patient_ethniccat", 
-    "date_year"
-])
-
-#List all features that are categorical
-categorical_columns = ([
-    "provider_code", 
-    "site_code", 
-    "admission_dayofweek",
-    #"patient_gender", 
-    #"patient_ethniccat", 
-    "pod_intended",
-    "admission_method", 
-    "admission_source", 
-    #"date_year", 
-    "date_month"
-    ])
-
-#Specify configuration for the categoric encoding
-config_custom = {}
-df_catenc = cat_enc.format_cat_features(
-    X_train_der.drop(exclude, axis=1), 
-    config_custom, 
-    train=True)
-
-#Apply one-hot encoding to all categorical columns
-#I simplified the code to do the numeric minmax step in this function as well
-preprocessor = cat_enc.get_encoding_fit(df_catenc, categorical_columns)
-
-X_train_pro = cat_enc.apply_fit(X_train_der, preprocessor)
-```
-
-### Nomralise/standardise features
-Normalise the numeric columns. (Discuss best way to do this, should all features be handled the same way?)
-
+### Function to handle the preprocessing application
 ```{python}
 def preprocessing(df, target="los", test_size=0.2, exclude=[], cat_columns=[]):
     #Split data into target and features
@@ -204,8 +86,8 @@ def preprocessing(df, target="los", test_size=0.2, exclude=[], cat_columns=[]):
         X, y, 
         random_state=1,  
         test_size=test_size, 
-        shuffle=True,
-        stratify=stratify_mask)
+        shuffle=True)
+        #stratify=stratify_mask)
 
     #Adjust for missing data
     X_train = adjust_missing(X_train)
@@ -233,6 +115,7 @@ def preprocessing(df, target="los", test_size=0.2, exclude=[], cat_columns=[]):
     return X_train, X_test, y_train, y_test
 ```
 
+### Code to execute the preprocessing
 ```{python}
 #List of columns to exclude
 exclude = ([
@@ -252,7 +135,7 @@ categorical_columns = ([
     "date_month"
     ])
 
-xr, xe, yr, ye = preprocessing(
+X_train, X_test, y_train, y_test = preprocessing(
     df_base, 
     exclude=exclude, 
     cat_columns=categorical_columns)

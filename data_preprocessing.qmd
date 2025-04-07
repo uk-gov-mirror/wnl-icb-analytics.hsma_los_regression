@@ -185,3 +185,72 @@ X_train_pro = cat_enc.apply_fit(X_train_der, preprocessor)
 
 ### Nomralise/standardise features
 Normalise the numeric columns. (Discuss best way to do this, should all features be handled the same way?)
+
+```{python}
+def preprocessing(df, target="los", test_size=0.2, exclude=[], cat_columns=[]):
+    #Split data into target and features
+    features = list(df.columns)
+    features.remove(target)
+
+    X = df[features]
+    y = df[target]
+
+    #Stratify the split data
+    ##Currently based on whether the target is 0 or non-0
+    stratify_mask = np.where(df.copy()[[target]] == 0, 0, 1)
+
+    #Apply test train split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, 
+        random_state=1,  
+        test_size=test_size, 
+        shuffle=True,
+        stratify=stratify_mask)
+
+    ##Does this need to be seperate for the train and test?
+    for ds in [X_train, X_test]:
+        #Adjust for missing data
+        ds = adjust_missing(ds)
+
+        #Derive new features
+        ds = derive_features(ds)
+
+    #Build encoding preprocessor
+    config_custom = {}
+    df_catenc = cat_enc.format_cat_features(
+        X_train.drop(exclude, axis=1), 
+        config_custom, 
+        train=True)
+
+    preprocessor = cat_enc.get_encoding_fit(df_catenc, categorical_columns)
+
+    for ds in [X_train, X_test]:
+        ds = cat_enc.apply_fit(ds, preprocessor)
+    
+    return X_train, X_test, y_train, y_test
+```
+
+```{python}
+#List of columns to exclude
+exclude = ([
+    "patient_gender", 
+    "patient_ethniccat", 
+    "date_year"
+])
+
+#List all features that are categorical
+categorical_columns = ([
+    "provider_code", 
+    "site_code", 
+    "admission_dayofweek",
+    "pod_intended",
+    "admission_method", 
+    "admission_source", 
+    "date_month"
+    ])
+
+xr, xe, yr, ye = preprocessing(
+    df_base, 
+    exclude=exclude, 
+    cat_columns=categorical_columns)
+```

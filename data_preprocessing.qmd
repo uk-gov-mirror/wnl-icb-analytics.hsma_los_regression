@@ -207,13 +207,15 @@ def preprocessing(df, target="los", test_size=0.2, exclude=[], cat_columns=[]):
         shuffle=True,
         stratify=stratify_mask)
 
-    ##Does this need to be seperate for the train and test?
-    for ds in [X_train, X_test]:
-        #Adjust for missing data
-        ds = adjust_missing(ds)
+    #Adjust for missing data
+    X_train = adjust_missing(X_train)
+    #Derive new features
+    X_train = derive_features(X_train)
 
-        #Derive new features
-        ds = derive_features(ds)
+    #Adjust for missing data
+    X_test = adjust_missing(X_test)
+    #Derive new features
+    X_test = derive_features(X_test)
 
     #Build encoding preprocessor
     config_custom = {}
@@ -224,8 +226,9 @@ def preprocessing(df, target="los", test_size=0.2, exclude=[], cat_columns=[]):
 
     preprocessor = cat_enc.get_encoding_fit(df_catenc, categorical_columns)
 
-    for ds in [X_train, X_test]:
-        ds = cat_enc.apply_fit(ds, preprocessor)
+    #Apply fit to train and test
+    X_train = cat_enc.apply_fit(X_train, preprocessor)
+    X_test = cat_enc.apply_fit(X_test, preprocessor)
     
     return X_train, X_test, y_train, y_test
 ```

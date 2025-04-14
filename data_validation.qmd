@@ -26,6 +26,23 @@ df_main = net.load_features(
     settings, filters=["pid", "nhs_pseudo", "ccr_lower", "ccr_upper"])
 ```
 
+### Understand Length of Stay
+Descriptive summary
+```{python}
+df_main['los'].describe()
+```
+
+Histogram
+```{python}
+sns.histplot(df_main["los"], kde=True)
+```
+
+Skew and Kurtosis
+```{python}
+print("Skewness: %f" % df_main['los'].skew())
+print("Kurtosis: %f" % df_main['los'].kurt())
+```
+
 ### Completeness check (Overall)
 
 Describe data pull

@@ -25,8 +25,21 @@ df_base = net.load_features(
     settings, filters=["pid", "nhs_pseudo", "ccr_lower", "ccr_upper"])
 
 #Remove columns not planned to be used as features
-df_base.drop(["admission_date", "hrg_code", "date_full"], axis=1, inplace=True)
+df_base.drop(["admission_date", "hrg_code", "date_full", "trust_hai_cases"], axis=1, inplace=True)
+
+#Add los trim to 30 days
+#df_base = df_base[df_base["los"] <= 30]
+#df_base = df_base[df_base["los"] > 0]
 ```
+```{python}
+#Remove rows with missing data
+df_base = df_base[~df_base["los"].isna()]
+df_base = df_base[~df_base["admission_source"].isna()]
+df_base = df_base[~df_base["site_beds_open"].isna()]
+df_base = df_base[~df_base["sick_days_lost"].isna()]
+df_base.shape
+```
+
 
 ### Functions for handling invalid data
 ```{python}
@@ -69,7 +82,10 @@ def derive_features(df):
 
 ### Function to handle the preprocessing application
 ```{python}
-def preprocessing(df, target="los", test_size=0.2, exclude=[], cat_columns=[]):
+def preprocessing(
+    df, target="los", test_size=0.2, exclude=[], cat_columns=[], rs=0
+    ):
+
     #Split data into target and features
     features = list(df.columns)
     features.remove(target)
@@ -84,7 +100,7 @@ def preprocessing(df, target="los", test_size=0.2, exclude=[], cat_columns=[]):
     #Apply test train split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, 
-        random_state=1,  
+        random_state=rs,  
         test_size=test_size, 
         shuffle=True)
         #stratify=stratify_mask)

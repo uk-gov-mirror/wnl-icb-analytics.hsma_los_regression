@@ -121,7 +121,4 @@ def load_features(settings, filters = []):
     #Remove parameter filters
     df_features = df_features.drop(columns=filters)
 
-    #Remove admission time due to poor completeness
-    df_features = df_features.drop("admission_time", axis=1)
-
     return df_features

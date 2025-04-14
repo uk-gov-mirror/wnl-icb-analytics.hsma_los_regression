@@ -32,9 +32,17 @@ Descriptive summary
 df_main['los'].describe()
 ```
 
-Histogram
+Target distribution
 ```{python}
-sns.histplot(df_main["los"], kde=True)
+#All data
+sns.kdeplot(df_main["los"])
+plt.show()
+#Los > 0
+sns.kdeplot(df_main[df_main["los"] > 0]["los"])
+plt.show()
+#Los > 1
+sns.kdeplot(df_main[df_main["los"] > 1]["los"])
+plt.show()
 ```
 
 Skew and Kurtosis
@@ -43,12 +51,59 @@ print("Skewness: %f" % df_main['los'].skew())
 print("Kurtosis: %f" % df_main['los'].kurt())
 ```
 
-### Completeness check (Overall)
+### Relation between the target and key features
 
-Describe data pull
 ```{python}
-df_main.describe()
+def plot_relation_scatter(df, var, target="los"):
+    plt.scatter(df[var], df[target], alpha=0.3, s=2)
+    plt.xlabel(var)
+    plt.ylabel(target)
+    plt.show()
+
+def plot_relation_kde(df, var, target="los"):
+    sns.kdeplot(x=df[var], y=df[target], fill=True, cmap='mako')
+    plt.title('2D KDE Plot')
+    plt.xlabel(var)
+    plt.ylabel(target)
+    plt.show()
+
+def plot_relation_box(df, var, target="los"):
+    sns.boxplot(x=var, y=target, data=df)
 ```
+
+```{python}
+plot_relation_scatter(df_main, "hrg_trim_days_el")
+plot_relation_scatter(df_main, "hrg_trim_days_nel")
+plot_relation_scatter(df_main, "cc_score")
+plot_relation_scatter(df_main, "patient_age")
+```
+
+```{python}
+plot_relation_box(df_main, "admission_dayofweek")
+```
+
+### Heatmap
+```{python}
+#Remove columns we don't want included in the heatmap
+df_heat = df_main.copy()
+
+#Filter to only keep numeric columns
+df_heat = df_heat[
+    ["los", "patient_age", 
+    "hrg_trim_days_el", "hrg_trim_days_nel", 
+    "count_comorbidities", "cc_score"]]
+
+# Compute the correlation matrix
+corr_matrix = df_heat.corr()
+
+# Plot the heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+plt.title("Correlation Heatmap")
+plt.show()
+```
+
+### Completeness check (Overall)
 
 How many rows contain a null value
 ```{python}
@@ -58,17 +113,19 @@ def overall_completeness(df):
     percentage = (1 - (rows_with_null / len(df))) * 100
     return percentage
 
-print(overall_completeness(df_main))
+print("Data with no missing data", overall_completeness(df_main))
+df_main.shape
 ```
 
 Which columns have the most missing data
 ```{python}
-completeness = (df_main.notnull().sum() / len(df_main)) * 100
-summary_df = completeness.to_frame(name='Completeness %')
-
-summary_df
+total = df_main.isnull().sum().sort_values(ascending=False)
+percent = (df_main.isnull().sum()/df_main.isnull().count()).sort_values(ascending=False)
+missing_data = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
+missing_data
 ```
 
+[Note: Some of these observations were fixed in the data pull script and no longer apply]
 Observation: 6% of rows have a NULL Trim days value
 Analysis:
 - Some regular attendance codes are labelled as daycase for the intended management (LA97B [GOSH Reporting])
@@ -187,21 +244,46 @@ summary_from_metric_name(df_main, "provider_code", overall_completeness)
 ### Review distribution of columns (categorical)
 For columns with catgorical values, what is the distribution of different values.
 ```{python}
+
+def summarise_categorical_column(df, col, los_bins=[0,1,5,10]):
+    total_rows = len(df)
+
+    group_counts = df[col].value_counts(dropna=False)
+    percent = group_counts / total_rows * 100
+
+    result = pd.DataFrame({
+        'Count': group_counts,
+        'Percentage': percent.round(2)
+    })
+
+    los_bins.append(-1)
+    for idx, bin in enumerate(los_bins):
+        if idx == 0:
+            df_bin = df[df["los"] == bin][col]
+            bin_name = str(bin)
+        elif idx == -1:
+            df_bin = df[df["los"] > los_bins[idx-1]][col]
+            bin_name = str(los_bins[idx-1]) + "+"
+        else:
+            df_bin = df[(df["los"] > los_bins[idx-1]) & (df["los"] <= bin)][col]
+            bin_name = str(los_bins[idx-1] + 1) + "_to_" + str(bin) 
+            
+        bin_value = (
+            df_bin.value_counts(dropna=False) / group_counts * 100).fillna(0)
+
+        result["los_" + bin_name] = bin_value.round(2)
+        
+
+    result.sort_values(by=["Count"], axis=0, ascending=False)
+    print(result)
+
 categorical_columns = [
     "hrg_code", "admission_dayofweek", "patient_gender", "patient_ethniccat",
     "pod_intended", "admission_method", "admission_source"
 ]
 
 for col in categorical_columns:
-    print(col, "- Unique:", len(list(df_main[col].unique())))
-    print(df_main.groupby(col).agg("size"))
-    print()
-
-#What about grouping HRG by first 2 digits (subchapter)?
-df_hrg = df_main.copy()
-df_hrg["hrg_sub"] = df_hrg["hrg_code"].str[0:2]
-print("hrg_sub", "- Unique:", len(list(df_hrg[col].unique())))
-print(df_hrg.groupby("hrg_sub").agg("size"))
+    summarise_categorical_column(df_main.copy(), col)
 ```
 Which categorical columns need grouping to prevent any one-hot translation being excessive.
 

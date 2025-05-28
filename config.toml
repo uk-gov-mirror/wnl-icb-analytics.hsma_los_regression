@@ -17,6 +17,7 @@ hrg_trim_days_column_el = "Ordinary \nelective long \nstay trim point \n(days)"
 hrg_trim_days_column_nel = "Non-elective \nlong stay \ntrim point \n(days)"
 
 [data_scripts]
+data_pull_script = "data_pull_may25.sql"
 ds_sus_spell = "patient_sus_spell_data_dev.sql"
 ds_sus_episode_icd_data = "patient_sus_icd_data_dev.sql"
 ds_hospital_infections = "trust_hospitalinfections_data_ho.sql"

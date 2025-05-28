@@ -16,6 +16,9 @@ def load_settings():
                             config["database"]["sql_createtable"]),
 
         #Data to pull
+        "data_pull_script":    ("./" + config["struct"]["script_dir"] +
+                            config["data_scripts"]["data_pull_script"]),
+
         "hrg_trim_file":    ("./" + config["struct"]["data_dir"] +
                             config["data_files"]["ds_hrg_trim"]),
         "cc_list_file":     ("./" + config["struct"]["data_dir"] +

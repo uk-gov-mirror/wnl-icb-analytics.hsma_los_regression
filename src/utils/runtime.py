@@ -15,14 +15,20 @@ def load_settings():
         #SQL table names
         "sql_pull_destination": (
             config["database"]["tables"]["sql_pull_destination"]),
+        "sql_preprocessing_destination": (
+            config["database"]["tables"]["sql_preprocessing_destination"]),
 
         #Scripts to create destination tables
         "script_pull_create": ("./" + config["struct"]["script_dir"] + 
-                            config["scripts"]["create"]["script_pull_create"]),
+            config["scripts"]["create"]["script_pull_create"]),
+        "script_preprocessing_create": ("./" + config["struct"]["script_dir"] + 
+            config["scripts"]["create"]["script_preprocessing_create"]),
 
         #Data to pull
-        "script_pull_source":    ("./" + config["struct"]["script_dir"] +
-                            config["scripts"]["sfw"]["script_pull_source"]),
+        "script_pull_source": ("./" + config["struct"]["script_dir"] +
+            config["scripts"]["sfw"]["script_pull_source"]),
+        "script_preprocessing_source": ("./" + config["struct"]["script_dir"] +
+            config["scripts"]["sfw"]["script_preprocessing_source"]),
     }
 
     return settings

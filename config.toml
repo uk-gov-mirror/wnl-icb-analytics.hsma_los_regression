@@ -8,6 +8,7 @@ sql_cooloff = 60
 
 [database.tables]
 sql_pull_destination = "los_regression_slim"
+sql_preprocessing_destination = "los_regression_preprocessing"
 
 [struct]
 data_dir = "data/"
@@ -15,8 +16,10 @@ script_dir = "docs/scripts/"
 
 [scripts]
 [scripts.create]
-script_pull_create = "data_pull_slim.sql"
+script_pull_create = "create_pull_slim.sql"
+script_preprocessing_create = "create_preprocessing_slim.sql"
 
 [scripts.sfw]
 script_pull_source = "data_pull_may25.sql"
-script_preprocessing_source = "data_pull_preprocessing.sql"
+script_preprocessing_source = "data_preprocessing_source.sql"
+script_model_dataset = "data_model_dataset.sql"

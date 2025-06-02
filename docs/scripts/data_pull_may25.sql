@@ -30,4 +30,34 @@ AND [spell.care_location.site_code_of_treatment] IN (
 	'C4M4J', 'RKEQ4', 'RAPNM')
 
 --Limit data to a single month initially for testing
-AND YEAR([spell.admission.date]) = 2024
+AND [spell.admission.date] >= '2022-01-01'
+
+--Limit the data to adults
+AND [spell.patient.identity.age_on_admission] >= 18
+
+--Remove records with erroneous age values
+AND [spell.patient.identity.age_on_admission] <= 120
+
+--Remove records with no LoS
+AND [spell.discharge.length_of_hospital_stay] IS NOT NULL
+
+--Remove non-relevant activity
+--Maternity and neonatal
+AND LEFT([spell.commissioning.grouping.core_hrg], 2) != 'NZ'
+AND LEFT([spell.commissioning.grouping.core_hrg], 1) != 'P'
+
+--Mental Health
+AND LEFT([spell.commissioning.grouping.core_hrg], 2) != 'WD'
+
+--COVID
+AND LEFT([spell.commissioning.grouping.core_hrg], 2) != 'DX'
+
+--Acute Drug Inoxication
+AND LEFT([spell.commissioning.grouping.core_hrg], 4) != 'WH22'
+
+--Acute Alcohol Intoxication
+AND LEFT([spell.commissioning.grouping.core_hrg], 4) != 'WH21'
+
+--Other
+AND [spell.commissioning.grouping.core_hrg] NOT IN (
+	'LA97B', 'WH50A', 'WH50B', 'BZ35A', 'BZ35B', 'AA82Z', 'WH01C')

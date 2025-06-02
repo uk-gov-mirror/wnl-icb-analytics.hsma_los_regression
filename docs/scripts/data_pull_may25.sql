@@ -1,6 +1,8 @@
 SELECT
 	--LoS (Target)
 	[spell.discharge.length_of_hospital_stay] AS [los],
+	--Date of admission
+	[spell.admission.date] AS [admission_date],
 	--Features
 	[spell.patient.identity.age_on_admission] AS [patient_age],
 	[spell.patient.identity.gender] AS [patient_gender],

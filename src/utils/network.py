@@ -17,6 +17,7 @@ def db_connect(dsn, database):
     engine = create_engine(conn_str, use_setinputsizes=False)
     return engine
 
+#Sub function of load_data to execute SQL
 def load_data_from_query(engine, query):
     with engine.connect() as con:
         res = pd.read_sql_query(query, con)
@@ -44,59 +45,51 @@ def load_data(settings, src, src_type="sql", engine=None):
         return pd.read_csv(settings[src])
 
 #Function to upload data for a given dataset
-def upload_data(df, engine, settings, batch_size=200):
+def upload_data(df, engine, settings, 
+                destination_table, create_script, batch_size=200):
+
+    sql_database = settings["sql_database"]
+    sql_schema = settings["sql_schema"]
+
+    #Get the full table name
+    full_table = (f"[{sql_database}].[{sql_schema}]." 
+                  + f"[{destination_table}]")
 
     #Convert float columns to objects (Needed for dealing with NaNs)
     df = df.astype(object).where(pd.notnull(df), None)
-
-    #Load destination table name
-    sql_database = settings["sql_database"]
-    sql_schema = settings["sql_destination_schema"]
-    sql_table = settings["sql_destination_table"]
     
+    #Split the data into rows
     rows = df.to_dict(orient="records")
 
-    #Check if the destination table already exists - now using EXISTS
-    query_exists = text(f"""
-        SELECT CASE WHEN EXISTS (
-            SELECT 1 FROM sys.schemas AS s 
-            INNER JOIN sys.tables AS t ON s.schema_id = t.schema_id 
-            WHERE s.name = '{sql_schema}' AND t.name = '{sql_table}'
-        ) THEN 1 ELSE 0 END
-    """)
-
+    #Re-create the destination table
+    #   This is because the structure of the tables change frequently
     with engine.connect() as con:
         #Set the database
         con.execute(text(f"USE {sql_database};"))
 
-        #Check if the table already exists
-        table_exists = con.execute(query_exists).scalar()  # More direct boolean result
-
-        #Is the table does not exist, create it
-        if not table_exists:
-            with open(settings["sql_createtable"]) as file:
-                create_query = text(file.read())
-            con.execute(create_query)
-        
-            #Commit changes
+        #Drop query
+        try:
+            query_drop = text(f"DROP TABLE {full_table}")
+            con.execute(query_drop)
             con.commit()
+        except:
+            pass
+
+        #Recreate the table
+        with open(create_script) as file:
+            create_query = text(file.read())
+        con.execute(create_query)
+    
+        #Commit changes
+        con.commit()
 
     #Bind the metadata to the destination table
     metadata = MetaData()
-    sqlalc_table = Table(sql_table, metadata, 
+    sqlalc_table = Table(destination_table, metadata, 
                             schema=sql_schema, autoload_with=engine)
 
-    # Single transaction for truncate and insert to prevent empty table if inserts fail
-    with engine.begin() as con:  # Using begin() instead of connect() for transaction
-        #If the destination table existed previously truncate it
-        if table_exists:  # Using the boolean from earlier
-            #Create delete query to remove existing data for this data point
-            del_query = (f"TRUNCATE TABLE "
-                        f"[{sql_database}].[{sql_schema}].[{sql_table}] ")
-    
-            #Delete existing data from the destination
-            con.execute(text(del_query))
-
+    #Insert the data
+    with engine.begin() as con:  
         #Group the data into batches and upload
         for i in range(0, len(rows), batch_size):
             batch = rows[i:i+batch_size]
@@ -105,6 +98,7 @@ def upload_data(df, engine, settings, batch_size=200):
                 batch
             )
 
+#Function to load the dataset with listed features filtered out
 def load_features(settings, filters = []):
     #Connect to DB
     engine = db_connect(settings["sql_dsn"], settings["sql_database"])

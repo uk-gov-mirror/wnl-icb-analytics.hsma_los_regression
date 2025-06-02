@@ -11,7 +11,7 @@ def load_data(settings):
     engine = net.db_connect(settings["sql_dsn"], settings["sql_database"])
 
     #SUS Spell data
-    df_spl = net.load_data(settings, "data_pull_script", "sql", engine)
+    df_spl = net.load_data(settings, "script_pull_source", "sql", engine)
     
     return df_spl
 
@@ -26,6 +26,9 @@ def main():
 
     #Upload the data to the destination table
     engine = net.db_connect(settings["sql_dsn"], settings["sql_database"])
-    net.upload_data(df_spl, engine, settings, batch_size=1600)
+    net.upload_data(df_spl, engine, settings, 
+                    settings["sql_pull_destination"], 
+                    settings["script_pull_create"], 
+                    batch_size=1600)
 
 main()

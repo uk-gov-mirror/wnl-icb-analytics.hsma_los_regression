@@ -3,29 +3,20 @@ title = "HSMA LOS REGRESSION"
 [database]
 sql_dsn = "SANDPIT"
 sql_database = "Data_Lab_NCL_Dev"
-sql_destination_schema = "JakeK"
-sql_destination_table = "los_regression_slim"
-sql_createtable = "data_pull_slim.sql"
-
+sql_schema = "JakeK"
 sql_cooloff = 60
+
+[database.tables]
+sql_pull_destination = "los_regression_slim"
 
 [struct]
 data_dir = "data/"
 script_dir = "docs/scripts/"
 
-hrg_trim_days_column_el = "Ordinary \nelective long \nstay trim point \n(days)"
-hrg_trim_days_column_nel = "Non-elective \nlong stay \ntrim point \n(days)"
+[scripts]
+[scripts.create]
+script_pull_create = "data_pull_slim.sql"
 
-[data_scripts]
-data_pull_script = "data_pull_may25.sql"
-ds_sus_spell = "patient_sus_spell_data_dev.sql"
-ds_sus_episode_icd_data = "patient_sus_icd_data_dev.sql"
-ds_hospital_infections = "trust_hospitalinfections_data_ho.sql"
-ds_workforce_sickness = "trust_sickness_data_allstaff.sql"
-ds_workforce_vacancy = "trust_vacancy_data_allstaff.sql"
-ds_beds = "site_bed_data.sql"
-ds_mos = "site_medically_optimised.sql"
-
-[data_files]
-ds_hrg_trim = "hrg_trim_data.csv"
-ds_cc_list = "cc_list.csv"
+[scripts.sfw]
+script_pull_source = "data_pull_may25.sql"
+script_preprocessing_source = "data_pull_preprocessing.sql"

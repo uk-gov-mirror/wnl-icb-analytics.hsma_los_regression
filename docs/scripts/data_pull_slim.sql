@@ -5,7 +5,8 @@ CREATE TABLE [Data_Lab_NCL_Dev].[JakeK].[los_regression_slim] (
     [site_code] VARCHAR(5),
     [patient_age] INT,
     [patient_gender] INT,
-    [admission_method] CHAR(2)
+    [admission_method] CHAR(2),
+    [hrg_code] CHAR(5)
 );
 
 CREATE INDEX index1 

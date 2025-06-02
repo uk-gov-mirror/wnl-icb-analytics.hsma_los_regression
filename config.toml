@@ -4,8 +4,8 @@ title = "HSMA LOS REGRESSION"
 sql_dsn = "SANDPIT"
 sql_database = "Data_Lab_NCL_Dev"
 sql_destination_schema = "JakeK"
-sql_destination_table = "los_regression_processed"
-sql_createtable = "data_pull_output.sql"
+sql_destination_table = "los_regression_slim"
+sql_createtable = "data_pull_slim.sql"
 
 sql_cooloff = 60
 

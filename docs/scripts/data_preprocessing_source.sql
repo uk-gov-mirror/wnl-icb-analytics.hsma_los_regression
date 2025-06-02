@@ -1,6 +1,6 @@
 SELECT los, 
-	provider_code, par.[Organisation_Name] AS [provider_name], 
-	site_code, org.[Organisation_Name] AS [site_name], 
+	par.[Organisation_Name] AS [provider_name], 
+	org.[Organisation_Name] AS [site_name], 
 	patient_age, patient_gender, admission_method
 FROM [Data_Lab_NCL_Dev].[JakeK].[los_regression_slim] los
 

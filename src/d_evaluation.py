@@ -4,6 +4,8 @@ import pickle
 
 from sklearn.metrics import mean_squared_error
 
+import utils.runtime as rt
+
 def evaluate_mse(site, y_test, y_pred):
     mse = mean_squared_error(y_test, y_pred)
     print(site, mse)
@@ -11,17 +13,19 @@ def evaluate_mse(site, y_test, y_pred):
     return mse
 
 def main(test_desc):
-    sites = [
-        "RAL01", "RAN01", "RAPNM", "RKEQ4", "RP401", "RRV03", "RRV30", "RRVNQ"]
+    #Load the runtime settings
+    settings = rt.load_settings()
+
+    sites = settings["sites"]
     
     sites_mse = []
 
     for site in sites:
 
-        path_prefix = "./data/sites/"
-        X_test = pd.read_csv(path_prefix + site + "/x_test.csv")
-        y_test= pd.read_csv(path_prefix + site + "/y_test.csv")
-        model = pickle.load(open(f"./data/sites/{site}/model.sav", 'rb'))
+        path_prefix = "./" + settings["site_data_dir"] + site
+        X_test = pd.read_csv(path_prefix + "/x_test.csv")
+        y_test= pd.read_csv(path_prefix + "/y_test.csv")
+        model = pickle.load(open(path_prefix + "/model.sav", 'rb'))
 
         y_pred = model.predict(X_test)
 
@@ -29,11 +33,11 @@ def main(test_desc):
 
 
     # Output the evaluation results
-    run_data_filename = "./output/run_data.xlsx"
+    run_data_filename = "./" + settings["run_tracker_file"]
 
     #Check the run data file exists and the next run number
     try:
-        run_data = pd.read_excel(run_data_filename, sheet_name="Runs")
+        run_data = pd.read_csv(run_data_filename)
         run_no = len(run_data)
         mode = "a"
     except FileNotFoundError as e:
@@ -48,8 +52,7 @@ def main(test_desc):
         columns=df_out_cols)
     
     #Write output to the runs file
-    with pd.ExcelWriter(run_data_filename, mode=mode) as writer: 
-        df_out.to_excel(writer, sheet_name="Runs", index=False)
+    df_out.to_csv(run_data_filename, mode=mode, index=False)
 
 description = "Base test by site"
 main(description)

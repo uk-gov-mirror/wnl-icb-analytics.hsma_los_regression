@@ -17,10 +17,10 @@ def load_data(settings):
     engine = net.db_connect(settings["sql_dsn"], settings["sql_database"])
 
     #SUS Spell data
-    df_spl = net.load_data(
-        settings, "script_preprocessing_source", "sql", engine)
+    df_base = net.load_data(
+        settings, "script_sfw_preprocessing", "sql", engine)
     
-    return df_spl
+    return df_base
 
 #Perform the train test split for the data
 def data_split(df, target, test_size=0.2, rs=42):
@@ -157,8 +157,7 @@ def main():
     df = load_data(settings)
 
     #Split the data by major hospital site
-    sites = [
-        "RAL01", "RAN01", "RAPNM", "RKEQ4", "RP401", "RRV03", "RRV30", "RRVNQ"]
+    sites = settings["sites"]
     
     for site in sites:
 
@@ -179,7 +178,7 @@ def main():
                                     mode="apply", weights=weights_train)
 
         #Output the datasets
-        path_prefix = f"./data/sites/{site}/"
+        path_prefix = f"./{settings["site_data_dir"]}{site}/"
         X_train = pd.concat([X_train, X_test])
         y_train = pd.concat([y_train, y_test])
 

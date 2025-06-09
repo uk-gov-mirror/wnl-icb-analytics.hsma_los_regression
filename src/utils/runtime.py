@@ -10,41 +10,25 @@ def load_settings():
         #SQL Connection settings
         "sql_dsn": config["database"]["sql_dsn"],
         "sql_database": config["database"]["sql_database"],
-        "sql_destination_schema": config["database"]["sql_destination_schema"],
-        "sql_destination_table": config["database"]["sql_destination_table"],
-        "sql_createtable": ("./" + config["struct"]["script_dir"] + 
-                            config["database"]["sql_createtable"]),
+        "sql_schema": config["database"]["sql_schema"],
+
+        #SQL table names
+        "sql_pull_destination": (
+            config["database"]["tables"]["sql_pull_destination"]),
+        "sql_preprocessing_destination": (
+            config["database"]["tables"]["sql_preprocessing_destination"]),
+
+        #Scripts to create destination tables
+        "script_pull_create": ("./" + config["struct"]["script_dir"] + 
+            config["scripts"]["create"]["script_pull_create"]),
+        "script_preprocessing_create": ("./" + config["struct"]["script_dir"] + 
+            config["scripts"]["create"]["script_preprocessing_create"]),
 
         #Data to pull
-        "hrg_trim_file":    ("./" + config["struct"]["data_dir"] +
-                            config["data_files"]["ds_hrg_trim"]),
-        "cc_list_file":     ("./" + config["struct"]["data_dir"] +
-                            config["data_files"]["ds_cc_list"]),
-
-        "sus_spell_script": ("./" + config["struct"]["script_dir"] + 
-                            config["data_scripts"]["ds_sus_spell"]),
-        "sus_episode_icd_script":
-                            ("./" + config["struct"]["script_dir"] + 
-                            config["data_scripts"]["ds_sus_episode_icd_data"]),
-        "hospital_infections_script":
-                            ("./" + config["struct"]["script_dir"] + 
-                            config["data_scripts"]["ds_hospital_infections"]),
-        "workforce_sickness_script":
-                            ("./" + config["struct"]["script_dir"] + 
-                            config["data_scripts"]["ds_workforce_sickness"]),
-        "workforce_vacancy_script":
-                            ("./" + config["struct"]["script_dir"] + 
-                            config["data_scripts"]["ds_workforce_vacancy"]),
-        "beds_script":
-                            ("./" + config["struct"]["script_dir"] + 
-                            config["data_scripts"]["ds_beds"]),
-        "medically_optimised_script":
-                            ("./" + config["struct"]["script_dir"] + 
-                            config["data_scripts"]["ds_mos"]),
-
-        #Structure Information
-        "hrg_trim_days_column_el": config["struct"]["hrg_trim_days_column_el"],
-        "hrg_trim_days_column_nel": config["struct"]["hrg_trim_days_column_nel"]
+        "script_pull_source": ("./" + config["struct"]["script_dir"] +
+            config["scripts"]["sfw"]["script_pull_source"]),
+        "script_preprocessing_source": ("./" + config["struct"]["script_dir"] +
+            config["scripts"]["sfw"]["script_preprocessing_source"]),
     }
 
     return settings

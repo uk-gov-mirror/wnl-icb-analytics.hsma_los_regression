@@ -26,4 +26,4 @@ script_sfw_base_sus_spell = "pull_base_sus_spell.sql"
 script_sfw_preprocessing = "pull_preprocessing.sql"
 
 [sites]
-sites = ["RAL01", "RAN01", "RAPNM", "RKEQ4", "RP401", "RRV03", "RRV30", "RRVNQ"]
+sites = ["RAL01", "RAN01", "RAPNM", "RKEQ4", "RP401", "RRV03", "RRV30", "C4M4J", "RRVNQ"]

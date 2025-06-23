@@ -40,6 +40,7 @@ AND [spell.patient.identity.age_on_admission] <= 120
 
 --Remove records with no LoS
 AND [spell.discharge.length_of_hospital_stay] IS NOT NULL
+AND [spell.discharge.length_of_hospital_stay] > -1
 
 --Remove non-relevant activity
 --Maternity and neonatal

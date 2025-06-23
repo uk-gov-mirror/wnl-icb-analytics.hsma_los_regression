@@ -24,6 +24,8 @@ def load_data(settings):
     df_base = net.load_data(
         settings, "script_sfw_preprocessing", "sql", engine)
     
+    df_base = df_base.drop("admission_date", axis=1)
+    
     return df_base
 
 #Perform the train test split for the data

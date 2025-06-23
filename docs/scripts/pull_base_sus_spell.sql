@@ -22,7 +22,7 @@ INNER JOIN [Dictionary].[dbo].[Organisation] parent
 ON child.SK_OrganisationID_ParentOrg = parent.SK_OrganisationID
 
 --Intended management is planned to be overnight
-WHERE [spell.admission.intended_management] = 1
+WHERE [spell.admission.intended_management] IN (1, 8)
 
 --Limit to the main NCL sites
 AND [spell.care_location.site_code_of_treatment] IN (

@@ -1,10 +1,14 @@
 #Import packages
+import numpy as np
 import pandas as pd
 import pickle
+import statsmodels.api as sm
 
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import PoissonRegressor
 
 import utils.runtime as rt
@@ -19,6 +23,8 @@ def load_data(settings):
     #SUS Spell data
     df_base = net.load_data(
         settings, "script_sfw_preprocessing", "sql", engine)
+    
+    df_base = df_base.drop("admission_date", axis=1)
     
     return df_base
 
@@ -124,7 +130,7 @@ def apply_transformer(df, transformer=None):
 
     return pd.DataFrame(df_trans, columns=output_features), transformer
 
-def preprocess(X, y, mode="set", weights={}):
+def preprocess(settings, X, y, mode="set", weights={}):
     #Account for missing/unknown data
     print("-> Adjust for missing data")
     X = adjust_missing(X)
@@ -144,10 +150,31 @@ def preprocess(X, y, mode="set", weights={}):
     else:
         X, _ = apply_transformer(X, transformer=weights["transformer"])
 
+    #Cap the tail for LoS at a maximum value
+    y = pd.Series(np.where(
+        y > settings["tail_cap_los"],
+        30,
+        y
+    ), name="los")
+
     print("\n Data Preview")
     print(X.head())
 
     return X, y, weights
+
+#Returns a Regressor object
+def get_regressor(reg):
+    if reg == "Poisson":
+        return PoissonRegressor()
+    
+    elif reg == "Poisson_sm":
+        return sm.families.Poisson()
+    
+    elif reg == "Random Forest":
+        return RandomForestRegressor()
+    
+    
+    raise Exception(f"No Regressor with name {reg}")
 
 def main():
     #Load the runtime settings
@@ -171,10 +198,10 @@ def main():
         
         #Process the training data
         print("X_train pre-processing:")
-        X_train, y_train, weights_train = preprocess(X_train, y_train)
+        X_train, y_train, weights_train = preprocess(settings, X_train, y_train)
         
         print("\nX_test pre-processing:")
-        X_test, y_test, _ = preprocess(X_test, y_test, 
+        X_test, y_test, _ = preprocess(settings, X_test, y_test, 
                                     mode="apply", weights=weights_train)
 
         #Output the datasets
@@ -188,8 +215,13 @@ def main():
         y_test.to_csv(path_prefix + "y_test" + ".csv", index=False)
 
         #Fit model
-        model = PoissonRegressor()
-        model.fit(X_train, y_train.values.ravel())
+        model = get_regressor(settings["regressor"])
+        
+        if settings["regressor"][-2:] == "sm":
+            X_with_const = sm.add_constant(X_train)
+            model = sm.GLM(y_train, X_with_const, family=model).fit()
+        else:
+            model.fit(X_train, y_train.values.ravel())
 
         pickle.dump(model, open(path_prefix + "model.sav", "wb"))
 

@@ -12,6 +12,7 @@ sql_preprocessing_destination = "los_regression_preprocessing"
 
 [struct]
 site_data_dir = "data/sites/"
+site_output_dir = "output/sites/"
 sql_script_dir = "docs/scripts/"
 run_tracker_file = "output/run_data.csv"
 
@@ -21,8 +22,8 @@ script_create_base = "create_base.sql"
 script_create_preprocessing = "create_preprocessing.sql"
 
 [scripts.sfw]
-script_sfw_base_sus_spell = "data_pull_may25.sql"
-script_sfw_preprocessing = "data_preprocessing_source.sql"
+script_sfw_base_sus_spell = "pull_base_sus_spell.sql"
+script_sfw_preprocessing = "pull_preprocessing.sql"
 
 [sites]
-sites = ["RAL01", "RAN01", "RAPNM", "RKEQ4", "RP401", "RRV03", "RRV30", "RRVNQ"]
+sites = ["RAL01", "RAN01", "RAPNM", "RKEQ4", "RRV03", "RRV30", "C4M4J", "RRVNQ"]

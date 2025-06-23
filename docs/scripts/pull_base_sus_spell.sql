@@ -22,7 +22,7 @@ INNER JOIN [Dictionary].[dbo].[Organisation] parent
 ON child.SK_OrganisationID_ParentOrg = parent.SK_OrganisationID
 
 --Intended management is planned to be overnight
-WHERE [spell.admission.intended_management] = 1
+WHERE [spell.admission.intended_management] IN (1, 8)
 
 --Limit to the main NCL sites
 AND [spell.care_location.site_code_of_treatment] IN (
@@ -40,6 +40,7 @@ AND [spell.patient.identity.age_on_admission] <= 120
 
 --Remove records with no LoS
 AND [spell.discharge.length_of_hospital_stay] IS NOT NULL
+AND [spell.discharge.length_of_hospital_stay] > -1
 
 --Remove non-relevant activity
 --Maternity and neonatal

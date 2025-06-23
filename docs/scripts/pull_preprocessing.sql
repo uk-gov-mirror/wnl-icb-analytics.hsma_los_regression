@@ -1,6 +1,7 @@
 SELECT los.los, 
 	--par.[Organisation_Name] AS [provider_name], 
 	--org.[Organisation_Name] AS [site_name],
+	los.[admission_date],
 	par.[Organisation_Code] AS [provider_code],
 	los.site_code AS [site_code], 
 	patient_age, patient_gender, admission_method

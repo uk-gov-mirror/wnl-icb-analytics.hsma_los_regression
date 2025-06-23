@@ -1,25 +1,44 @@
-# NCL sample project folder
+# Understanding the Drivers of Length of Stay - HSMA #6010 
 
-This git repository contains a shell that should be used as the default structure for new projects
-in the analytical team.  It won't fit all circumstances perfectly, and you can make changes and issue a 
-pull request for new features / changes.
+This project is seeking to create a model to understand the growth in Length of Stay (LoS) in NCL since April 2019.
+The code contains a Python pipeline to iteratively modfiy the model and evaluation.
 
-The aim of this template is two-fold: firstly to give a common structure for analytical projects to aid
-reproducibility, secondly to allow for additional security settings as default to prevent accidental upload of files that should not be committed to Git and GitHub.
+## Changelog
 
-__Please update/replace this README file with one relevant to your project__
+### [1.0.0] - 2025-06-23
+#### Added
+- First working version release. Model features include Age, Gender, Emergency Admission by Site
+- The model can alternate between a Poisson Regression and a Random Forest Regressor model
 
-## To use this template, please use the following practises:
+## Usage
+The working directory for this project contains the .env file and the Python notebook used to explore and validate the data.
+The working directory is currently saved on the N Drive in the UEC and Productivity Team directory:
 
-* Put any data files in the `data` folder.  This folder is explicitly named in the .gitignore file.  A further layer of security is that all xls, xlsx, csv and pdf files are also explicit ignored in the whole folder as well.  ___If you need to commit one of these files, you must use the `-f` (force) command in `commit`, but you must be sure there is no identifiable data.__
-* Save any documentation in the `docs` file.  This does not mean you should avoid commenting your code, but if you have an operating procedure or supporting documents, add them to this folder.
-* Please save all output: data, formatted tables, graphs etc. in the output folder.  This is also implicitly ignored by git, but you can use the `-f` (force) command in `commit` to add any you wish to publish to github.
-
-
-### Please also consider the following:
-* Linting your code.  This is a formatting process that follows a rule set.  We broadly encourage the tidyverse standard, and recommend the `lintr` package.
-* Comment your code to make sure others can follow.
-* Consider your naming conventions: we recommend `snake case` where spaces are replaced by underscores and no capitals are use. E.g. `outpatient_referral_data`
+...\UEC and Productivity Team\UEC\HSMA Regression\archive
 
 
+To use the code, copy the .env file into the top level directory of this project, setup the virtual environment, and run these scripts in sequence:
+* a_data_pull.py
+* b_data_validation.ipynb (optional)
+* c_data_preprocessing.py
+* d_evaluation.py
+
+These scripts require site level directories in the data and output directories for each site listed in the config.toml. For example with default settings, the following directories need to exist to process RAL01 data:
+* ./data/sites/RAL01
+* ./output/sites/RAL01
+
+The REGRESSOR variable in the .env file determines which regression model is used in c_data_preprocessing.py. This settings needs to be kept consistent when running d_evaluation.py meaning you need to re-run both c_data_preporcessing.py and evaluation.py whenever you edit this variable.
+
+## Future Development
+
+Further development of this project would include adding more sophisticated features to capture the type of diagnosis and activity the admission relates to. 
+
+Potential features include: Previous Admissions, Primary Diagnosis, Comorbidities, Admission Type
+
+## Licence
 This repository is dual licensed under the [Open Government v3]([https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) & MIT. All code can outputs are subject to Crown Copyright.
+
+## Contact
+Jake Kealey - jake.kealey@nhs.net
+
+Project Link: https://github.com/ncl-cancer-alliance/hsma_los_regression

@@ -9,7 +9,7 @@ import utils.runtime as rt
 import utils.evaluation_plots as ep
 
 def evaluate_mse(site, y_test, y_pred):
-    mse = mean_squared_error(y_test, y_pred)
+    mse = np.sqrt(mean_squared_error(y_test, y_pred))
     print(site, mse)
     
     return mse

@@ -26,7 +26,7 @@ WHERE [spell.admission.intended_management] IN (1, 8)
 
 --Limit to the main NCL sites
 AND [spell.care_location.site_code_of_treatment] IN (
-	'RRV03', 'RP401', 'RRVNQ', 'RAN01', 'RAL01', 'RRV30', 
+	'RRV03', 'RRVNQ', 'RAN01', 'RAL01', 'RRV30', 
 	'C4M4J', 'RKEQ4', 'RAPNM')
 
 --Limit data to a single month initially for testing

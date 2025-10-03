@@ -1,0 +1,7 @@
+'patient_age', 'flag_emergency', 'provider_code_RAL',
+'provider_code_RAN', 'provider_code_RAP', 'provider_code_RKE',
+'provider_code_RP4', 'provider_code_RRV', 'site_code_C4M4J',
+'site_code_RAL01', 'site_code_RAN01', 'site_code_RAPNM',
+'site_code_RKEQ4', 'site_code_RP401', 'site_code_RRV03',
+'site_code_RRV30', 'site_code_RRVNQ', 'patient_gender_Female',
+'patient_gender_Male'
